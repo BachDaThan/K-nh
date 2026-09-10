@@ -1,0 +1,139 @@
+name: Build Kính (APK + EXE)
+
+# Chạy mỗi khi push code lên nhánh main, hoặc bấm chạy tay từ tab Actions.
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write  # cần quyền này để tạo/ghi đè Release
+
+jobs:
+  build-android:
+    name: Build APK (Android)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cài Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.47.1'
+          cache: true
+
+      - name: Sinh lại thư mục android/ đúng chuẩn phiên bản Flutter đang dùng
+        run: |
+          rm -rf android
+          flutter create --platforms=android --project-name=kinh --org=com.bachdathan .
+
+      - name: Áp icon riêng của app vào thư mục vừa sinh
+        run: |
+          for dir in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            cp assets/icon_${dir}.png android/app/src/main/res/mipmap-${dir}/ic_launcher.png 2>/dev/null || true
+          done
+
+      - name: Đặt tên hiển thị app là "Kính"
+        shell: bash
+        run: |
+          sed -i 's/android:label="[^"]*"/android:label="Kính"/' android/app/src/main/AndroidManifest.xml
+
+      - name: Tải dependencies
+        run: flutter pub get
+
+      - name: Build APK (release)
+        run: flutter build apk --release
+
+      - name: Đổi tên APK cho dễ nhận diện
+        run: cp build/app/outputs/flutter-apk/app-release.apk Kinh.apk
+
+      - name: Lưu APK làm artifact tạm
+        uses: actions/upload-artifact@v4
+        with:
+          name: kinh-apk
+          path: Kinh.apk
+
+  build-windows:
+    name: Build EXE (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.47.1'
+          cache: true
+
+      - name: Bật hỗ trợ Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Sinh thư mục windows/ đúng chuẩn phiên bản Flutter đang dùng
+        shell: bash
+        run: |
+          rm -rf windows
+          flutter create --platforms=windows --project-name=kinh .
+
+      - name: Tải dependencies
+        run: flutter pub get
+
+      - name: Build EXE (release)
+        run: flutter build windows --release
+
+      - name: Đóng gói thư mục build thành zip
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath Kinh-Windows.zip
+
+      - name: Lưu EXE làm artifact tạm
+        uses: actions/upload-artifact@v4
+        with:
+          name: kinh-windows
+          path: Kinh-Windows.zip
+
+  release:
+    name: Publish lên GitHub Releases
+    needs: [ build-android, build-windows ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tải lại APK
+        uses: actions/download-artifact@v4
+        with:
+          name: kinh-apk
+          path: dist
+
+      - name: Tải lại EXE
+        uses: actions/download-artifact@v4
+        with:
+          name: kinh-windows
+          path: dist
+
+      - name: Đọc số phiên bản từ pubspec.yaml
+        id: ver
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Tạo/Cập nhật Release "latest"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Kính — bản mới nhất (v${{ steps.ver.outputs.version }})"
+          body: |
+            Bản build tự động mới nhất từ nhánh main.
+            - `Kinh.apk` — cài trên Android
+            - `Kinh-Windows.zip` — giải nén rồi chạy trên Windows
+          files: |
+            dist/Kinh.apk
+            dist/Kinh-Windows.zip
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

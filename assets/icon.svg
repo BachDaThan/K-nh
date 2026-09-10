@@ -1,0 +1,39 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#1E2233"/>
+      <stop offset="100%" stop-color="#0D0E14"/>
+    </radialGradient>
+    <linearGradient id="lens" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8FA8FF"/>
+      <stop offset="45%" stop-color="#6C8CFF"/>
+      <stop offset="100%" stop-color="#3E52C7"/>
+    </linearGradient>
+    <linearGradient id="facet1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C9D5FF" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#C9D5FF" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="facet2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- nền bo góc kiểu Bento -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- viên kính / thấu kính đa giác cách điệu, tượng trưng cho "soi rõ mọi thứ" -->
+  <g transform="translate(256 266)">
+    <polygon points="0,-140 121,-70 121,70 0,140 -121,70 -121,-70"
+             fill="url(#lens)" stroke="#0D0E14" stroke-width="6"/>
+    <!-- các mặt cắt facet tạo chiều sâu như viên đá quý -->
+    <polygon points="0,-140 121,-70 0,-10" fill="url(#facet1)"/>
+    <polygon points="0,-140 -121,-70 0,-10" fill="url(#facet2)"/>
+    <polygon points="121,-70 121,70 0,-10" fill="#4A5FD9" opacity="0.55"/>
+    <polygon points="-121,-70 -121,70 0,-10" fill="#5568E0" opacity="0.4"/>
+    <polygon points="121,70 0,140 0,-10" fill="#2E3DA8" opacity="0.6"/>
+    <polygon points="-121,70 0,140 0,-10" fill="#3B4BC0" opacity="0.5"/>
+    <!-- điểm sáng phản chiếu -->
+    <ellipse cx="-40" cy="-70" rx="22" ry="34" fill="#FFFFFF" opacity="0.6"/>
+  </g>
+</svg>
