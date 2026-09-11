@@ -5,14 +5,15 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import 'browser_engine.dart';
 
-/// Implementation dùng System WebView (Chromium) trên Android
-/// và WebView2 trên Windows (qua webview_flutter + webview_win_floating).
+/// Chromium / System WebView (Android) + WebView2 (Windows).
 ///
-/// Fix Omnibox không nhận tap: bật Hybrid Composition trên Android
-/// để PlatformView không đè / cướp gesture của widget Flutter phía trên.
+/// Fix load URL: hàng đợi [_pendingUrl] — nếu gọi loadUrl trước khi
+/// WebViewWidget mount, URL được giữ và load ngay khi view sẵn sàng.
 class ChromiumBrowserEngine implements BrowserEngine {
   final Map<String, WebViewController> _controllers = {};
   final Map<String, double> _zoomLevels = {};
+  final Map<String, String> _pendingUrl = {};
+  final Set<String> _mounted = {};
 
   void Function(String tabId, String? title)? onTitleChanged;
   void Function(String tabId, String? url)? onUrlChanged;
@@ -22,15 +23,16 @@ class ChromiumBrowserEngine implements BrowserEngine {
   void Function(String tabId, String url, String fileName)? onDownloadStart;
 
   WebViewController _createController(String tabId) {
-    final controller = WebViewController()
+    late final WebViewController controller;
+    controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xFF121212))
+      ..setBackgroundColor(const Color(0xFF1A1A1A))
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
             onLoadingChanged?.call(tabId, true);
             onUrlChanged?.call(tabId, url);
-            onProgressChanged?.call(tabId, 0.1);
+            onProgressChanged?.call(tabId, 0.05);
           },
           onProgress: (progress) {
             onProgressChanged?.call(tabId, progress / 100.0);
@@ -39,17 +41,17 @@ class ChromiumBrowserEngine implements BrowserEngine {
             onLoadingChanged?.call(tabId, false);
             onUrlChanged?.call(tabId, url);
             onProgressChanged?.call(tabId, 1.0);
-            final c = _controllers[tabId];
-            if (c != null) {
-              final title = await c.getTitle();
+            try {
+              final title = await controller.getTitle();
               onTitleChanged?.call(tabId, title);
-              final back = await c.canGoBack();
-              final forward = await c.canGoForward();
+              final back = await controller.canGoBack();
+              final forward = await controller.canGoForward();
               onNavStateChanged?.call(tabId, back, forward);
-            }
+            } catch (_) {}
           },
           onWebResourceError: (error) {
             onLoadingChanged?.call(tabId, false);
+            debugPrint('WebView error [$tabId]: ${error.errorCode} ${error.description}');
           },
           onNavigationRequest: (request) {
             return NavigationDecision.navigate;
@@ -57,13 +59,38 @@ class ChromiumBrowserEngine implements BrowserEngine {
         ),
       );
 
+    // Android: bật DOM storage, geolocation off, etc.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      final platform = controller.platform;
+      if (platform is AndroidWebViewController) {
+        AndroidWebViewController.enableDebugging(true);
+        platform.setMediaPlaybackRequiresUserGesture(false);
+      }
+    }
+
     _controllers[tabId] = controller;
     _zoomLevels[tabId] = 1.0;
     return controller;
   }
 
-  /// Chỉ tạo WebViewWidget cho tab đang active (tránh nhiều PlatformView
-  /// cùng chiếm gesture). Controller vẫn giữ trong map khi đổi tab.
+  void ensureController(String tabId) {
+    _controllers[tabId] ?? _createController(tabId);
+  }
+
+  Future<void> _doLoad(String tabId, String target) async {
+    final c = _controllers[tabId];
+    if (c == null) return;
+    debugPrint('WebView load [$tabId]: $target');
+    onLoadingChanged?.call(tabId, true);
+    onUrlChanged?.call(tabId, target);
+    try {
+      await c.loadRequest(Uri.parse(target));
+    } catch (e) {
+      debugPrint('WebView loadRequest failed: $e');
+      onLoadingChanged?.call(tabId, false);
+    }
+  }
+
   @override
   Widget buildView({
     required String tabId,
@@ -71,10 +98,16 @@ class ChromiumBrowserEngine implements BrowserEngine {
   }) {
     final controller = _controllers[tabId] ?? _createController(tabId);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => onCreated());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _mounted.add(tabId);
+      onCreated();
+      // Flush URL đang chờ
+      final pending = _pendingUrl.remove(tabId);
+      if (pending != null && pending.isNotEmpty) {
+        await _doLoad(tabId, pending);
+      }
+    });
 
-    // Android: Hybrid Composition — PlatformView nằm đúng trong hierarchy,
-    // widget Flutter phía trên (Omnibox, TabStrip) nhận được tap/keyboard.
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       final platformController = controller.platform;
       if (platformController is AndroidWebViewController) {
@@ -94,70 +127,73 @@ class ChromiumBrowserEngine implements BrowserEngine {
     );
   }
 
-  WebViewController? _c(String tabId) => _controllers[tabId];
-
-  /// Đảm bảo controller tồn tại trước khi load (khi tab mới chưa buildView).
-  void ensureController(String tabId) {
-    _controllers[tabId] ?? _createController(tabId);
+  String _normalize(String urlOrQuery) {
+    var target = urlOrQuery.trim();
+    if (target.isEmpty) return target;
+    final looksLikeUrl = target.contains('://') ||
+        (target.contains('.') && !target.contains(' '));
+    if (!looksLikeUrl) {
+      return 'https://www.google.com/search?q=${Uri.encodeComponent(target)}';
+    }
+    if (!target.contains('://')) {
+      target = 'https://$target';
+    }
+    return target;
   }
 
   @override
   Future<void> loadUrl(String tabId, String urlOrQuery) async {
     ensureController(tabId);
-    final c = _c(tabId)!;
-
-    String target = urlOrQuery.trim();
+    final target = _normalize(urlOrQuery);
     if (target.isEmpty) return;
 
-    final looksLikeUrl = target.contains('://') ||
-        (target.contains('.') && !target.contains(' '));
-    if (!looksLikeUrl) {
-      final encoded = Uri.encodeComponent(target);
-      target = 'https://www.google.com/search?q=$encoded';
-    } else if (!target.contains('://')) {
-      target = 'https://$target';
+    // Nếu WebView chưa mount → xếp hàng, load khi buildView xong
+    if (!_mounted.contains(tabId)) {
+      _pendingUrl[tabId] = target;
+      onUrlChanged?.call(tabId, target);
+      onLoadingChanged?.call(tabId, true);
+      return;
     }
-
-    await c.loadRequest(Uri.parse(target));
+    await _doLoad(tabId, target);
   }
 
   @override
   Future<void> goBack(String tabId) async {
-    final c = _c(tabId);
+    final c = _controllers[tabId];
     if (c != null && await c.canGoBack()) await c.goBack();
   }
 
   @override
   Future<void> goForward(String tabId) async {
-    final c = _c(tabId);
+    final c = _controllers[tabId];
     if (c != null && await c.canGoForward()) await c.goForward();
   }
 
   @override
   Future<void> reload(String tabId) async {
-    await _c(tabId)?.reload();
+    await _controllers[tabId]?.reload();
   }
 
   @override
   Future<void> stopLoading(String tabId) async {
     try {
-      await _c(tabId)?.runJavaScript('window.stop();');
+      await _controllers[tabId]?.runJavaScript('window.stop();');
     } catch (_) {}
   }
 
   @override
   Future<bool> canGoBack(String tabId) async {
-    return await _c(tabId)?.canGoBack() ?? false;
+    return await _controllers[tabId]?.canGoBack() ?? false;
   }
 
   @override
   Future<bool> canGoForward(String tabId) async {
-    return await _c(tabId)?.canGoForward() ?? false;
+    return await _controllers[tabId]?.canGoForward() ?? false;
   }
 
   @override
   Future<void> setZoom(String tabId, double factor) async {
-    final c = _c(tabId);
+    final c = _controllers[tabId];
     if (c == null) return;
     final clamped = factor.clamp(0.25, 5.0);
     _zoomLevels[tabId] = clamped;
@@ -173,28 +209,27 @@ class ChromiumBrowserEngine implements BrowserEngine {
 
   @override
   Future<String?> getCurrentUrl(String tabId) async {
-    return await _c(tabId)?.currentUrl();
+    return await _controllers[tabId]?.currentUrl();
   }
 
   @override
   Future<String?> getTitle(String tabId) async {
-    return await _c(tabId)?.getTitle();
+    return await _controllers[tabId]?.getTitle();
   }
 
   @override
   Future<dynamic> evaluateJavascript(String tabId, String source) async {
     try {
-      return await _c(tabId)?.runJavaScriptReturningResult(source);
+      return await _controllers[tabId]?.runJavaScriptReturningResult(source);
     } catch (_) {
-      await _c(tabId)?.runJavaScript(source);
+      await _controllers[tabId]?.runJavaScript(source);
       return null;
     }
   }
 
   @override
   Future<void> clearCookies() async {
-    final cookieManager = WebViewCookieManager();
-    await cookieManager.clearCookies();
+    await WebViewCookieManager().clearCookies();
   }
 
   @override
@@ -210,16 +245,16 @@ class ChromiumBrowserEngine implements BrowserEngine {
   @override
   Future<void> printToPdf(String tabId) async {
     try {
-      await _c(tabId)?.runJavaScript('window.print();');
+      await _controllers[tabId]?.runJavaScript('window.print();');
     } catch (_) {}
   }
 
   @override
   Future<String?> getUserAgent(String tabId) async {
     try {
-      final result = await _c(tabId)
+      final r = await _controllers[tabId]
           ?.runJavaScriptReturningResult('navigator.userAgent');
-      return result?.toString();
+      return r?.toString();
     } catch (_) {
       return null;
     }
@@ -229,11 +264,15 @@ class ChromiumBrowserEngine implements BrowserEngine {
   Future<void> disposeTab(String tabId) async {
     _controllers.remove(tabId);
     _zoomLevels.remove(tabId);
+    _pendingUrl.remove(tabId);
+    _mounted.remove(tabId);
   }
 
   @override
   Future<void> dispose() async {
     _controllers.clear();
     _zoomLevels.clear();
+    _pendingUrl.clear();
+    _mounted.clear();
   }
 }

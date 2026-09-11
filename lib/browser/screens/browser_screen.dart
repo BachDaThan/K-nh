@@ -129,6 +129,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   void _addTab({bool activate = true, String? initialUrl}) {
     final tab = BrowserTab();
+    _engine.ensureController(tab.id);
     setState(() {
       _tabs.add(tab);
       if (activate) {
@@ -136,11 +137,17 @@ class _BrowserScreenState extends State<BrowserScreen> {
         _omniboxController.text = '';
       }
     });
-    if (initialUrl != null && initialUrl.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadInTab(tab.id, initialUrl);
-      });
-    }
+    // Mặc định mở trang chủ nếu không có URL — giúp WebView mount + load thật
+    final url = (initialUrl != null && initialUrl.isNotEmpty)
+        ? initialUrl
+        : 'https://www.google.com';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadInTab(tab.id, url);
+      if (activate) {
+        _omniboxController.text = url;
+      }
+    });
   }
 
   void _closeTab(String id) {
