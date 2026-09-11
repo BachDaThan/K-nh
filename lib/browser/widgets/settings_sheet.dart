@@ -13,6 +13,9 @@ class SettingsSheet extends StatefulWidget {
   final DownloadService downloadService;
   final BrowserEngine engine;
   final VoidCallback onChanged;
+  final VoidCallback? onOpenHistory;
+  final VoidCallback? onOpenActivityLog;
+  final VoidCallback? onOpenPrivacy;
 
   const SettingsSheet({
     super.key,
@@ -22,6 +25,9 @@ class SettingsSheet extends StatefulWidget {
     required this.downloadService,
     required this.engine,
     required this.onChanged,
+    this.onOpenHistory,
+    this.onOpenActivityLog,
+    this.onOpenPrivacy,
   });
 
   @override
@@ -81,6 +87,46 @@ class _SettingsSheetState extends State<SettingsSheet> {
               '(Kiến trúc đã chuẩn bị để swap sang GeckoView sau này)',
               style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
             ),
+            const Divider(height: 32),
+
+            const Text('Bảo mật & Lịch sử (Bước 3)',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.history, size: 20),
+              title: const Text('Lịch sử duyệt web'),
+              onTap: () {
+                Navigator.pop(context);
+                widget.onOpenHistory?.call();
+              },
+            ),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.timeline, size: 20),
+              title: const Text('Activity Log (minh bạch)'),
+              onTap: () {
+                Navigator.pop(context);
+                widget.onOpenActivityLog?.call();
+              },
+            ),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.cleaning_services, size: 20),
+              title: const Text('Dọn dẹp / xóa theo domain'),
+              onTap: () {
+                Navigator.pop(context);
+                widget.onOpenPrivacy?.call();
+              },
+            ),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.visibility_off, size: 20),
+              title: const Text('Tab ẩn danh'),
+              subtitle: const Text('Nút mắt trên thanh tab — không ghi lịch sử',
+                  style: TextStyle(fontSize: 11)),
+              onTap: null,
+            ),
+
             const Divider(height: 32),
 
             // DoH

@@ -10,6 +10,8 @@ class BrowserTab {
   bool canGoBack;
   bool canGoForward;
   DateTime lastAccessed;
+  /// Tab ẩn danh: không ghi lịch sử / activity log ra đĩa.
+  final bool isIncognito;
 
   BrowserTab({
     String? id,
@@ -20,6 +22,7 @@ class BrowserTab {
     this.canGoBack = false,
     this.canGoForward = false,
     DateTime? lastAccessed,
+    this.isIncognito = false,
   })  : id = id ?? const Uuid().v4(),
         lastAccessed = lastAccessed ?? DateTime.now();
 
@@ -31,6 +34,7 @@ class BrowserTab {
     bool? canGoBack,
     bool? canGoForward,
     DateTime? lastAccessed,
+    bool? isIncognito,
   }) {
     return BrowserTab(
       id: id,
@@ -41,6 +45,7 @@ class BrowserTab {
       canGoBack: canGoBack ?? this.canGoBack,
       canGoForward: canGoForward ?? this.canGoForward,
       lastAccessed: lastAccessed ?? this.lastAccessed,
+      isIncognito: isIncognito ?? this.isIncognito,
     );
   }
 }

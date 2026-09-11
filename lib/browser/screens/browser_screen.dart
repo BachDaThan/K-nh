@@ -13,6 +13,12 @@ import '../widgets/omnibox.dart';
 import '../widgets/tab_strip.dart';
 import '../widgets/bookmark_bar.dart';
 import '../widgets/settings_sheet.dart';
+import '../widgets/history_sheet.dart';
+import '../widgets/activity_log_sheet.dart';
+import '../widgets/privacy_sheet.dart';
+import '../services/history_service.dart';
+import '../services/activity_log_service.dart';
+import '../models/activity_event.dart';
 
 /// Màn hình trình duyệt chính của Kính (Bước 2).
 ///
@@ -35,6 +41,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
   final _downloadService = DownloadService();
   final _passwordService = PasswordService();
   final _diversityService = SearchDiversityService();
+  final _historyService = HistoryService();
+  final _activityLog = ActivityLogService();
 
   final _omniboxController = TextEditingController();
   bool _servicesReady = false;
@@ -78,8 +86,20 @@ class _BrowserScreenState extends State<BrowserScreen> {
       if (t != null && mounted) setState(() => t.progress = progress);
     };
     _engine.onLoadingChanged = (tabId, loading) {
-      final t = _findTab(tabId);
-      if (t != null && mounted) setState(() => t.isLoading = loading);
+      final tab = _findTab(tabId);
+      if (tab != null && mounted) setState(() => tab.isLoading = loading);
+      // Khi load xong: ghi lịch sử (nếu không ẩn danh)
+      if (!loading && tab != null && !tab.isIncognito) {
+        final u = tab.url;
+        if (u.isNotEmpty && u != 'about:blank') {
+          _historyService.add(title: tab.title, url: u);
+          _activityLog.log(
+            kind: ActivityKind.pageFinished,
+            message: 'Tải xong: ${tab.title.isEmpty ? u : tab.title}',
+            url: u,
+          );
+        }
+      }
     };
     _engine.onNavStateChanged = (tabId, back, forward) {
       final t = _findTab(tabId);
@@ -116,6 +136,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
       _downloadService.load(),
       _passwordService.load(),
       _diversityService.load(),
+      _historyService.load(),
+      _activityLog.load(),
     ]);
     if (!mounted) return;
     setState(() {
@@ -135,8 +157,11 @@ class _BrowserScreenState extends State<BrowserScreen> {
   BrowserTab? get _activeTab =>
       _activeTabId == null ? null : _findTab(_activeTabId!);
 
-  void _addTab({bool activate = true, String? initialUrl}) {
-    final tab = BrowserTab();
+  void _addTab({bool activate = true, String? initialUrl, bool incognito = false}) {
+    final tab = BrowserTab(
+      isIncognito: incognito,
+      title: incognito ? 'Ẩn danh' : 'Tab mới',
+    );
     _engine.ensureController(tab.id);
     setState(() {
       _tabs.add(tab);
@@ -151,6 +176,13 @@ class _BrowserScreenState extends State<BrowserScreen> {
         : 'https://www.google.com';
     _tabRootUrl[tab.id] = url;
     _tabLeftRoot[tab.id] = false;
+    if (incognito) {
+      _activityLog.log(
+        kind: ActivityKind.incognitoStart,
+        message: 'Mở tab ẩn danh',
+        ephemeral: true,
+      );
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _loadInTab(tab.id, url);
@@ -190,10 +222,17 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   Future<void> _loadInTab(String tabId, String raw) async {
-    // Áp dụng Search Diversity nếu là từ khóa tìm kiếm.
+    final tab = _findTab(tabId);
     final looksLikeUrl =
         raw.contains('://') || (raw.contains('.') && !raw.contains(' '));
     final query = looksLikeUrl ? raw : _diversityService.transformQuery(raw);
+    final ephemeral = tab?.isIncognito == true;
+    await _activityLog.log(
+      kind: ActivityKind.navigation,
+      message: 'Điều hướng: $query',
+      url: query,
+      ephemeral: ephemeral,
+    );
     await _engine.loadUrl(tabId, query);
   }
 
@@ -226,6 +265,57 @@ class _BrowserScreenState extends State<BrowserScreen> {
     setState(() {});
   }
 
+  void _openHistory() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => HistorySheet(
+        historyService: _historyService,
+        onOpenUrl: (url) {
+          final tab = _activeTab;
+          if (tab != null) {
+            _tabLeftRoot[tab.id] = true;
+            _loadInTab(tab.id, url);
+          }
+        },
+        onChanged: () => setState(() {}),
+      ),
+    );
+  }
+
+  void _openActivityLog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => ActivityLogSheet(logService: _activityLog),
+    );
+  }
+
+  void _openPrivacy() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => PrivacySheet(
+        engine: _engine,
+        historyService: _historyService,
+        activityLog: _activityLog,
+        onChanged: () => setState(() {}),
+      ),
+    );
+  }
+
   void _openSettings() {
     showModalBottomSheet(
       context: context,
@@ -241,6 +331,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
         downloadService: _downloadService,
         engine: _engine,
         onChanged: () => setState(() {}),
+        onOpenHistory: _openHistory,
+        onOpenActivityLog: _openActivityLog,
+        onOpenPrivacy: _openPrivacy,
       ),
     );
   }
@@ -417,6 +510,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     onSelect: _switchTab,
                     onClose: _closeTab,
                     onAdd: () => _addTab(activate: true),
+                    onAddIncognito: () =>
+                        _addTab(activate: true, incognito: true),
                   ),
                   Omnibox(
                     controller: _omniboxController,

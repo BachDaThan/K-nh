@@ -2,7 +2,7 @@ name: kinh
 description: "Kính - Trình duyệt Dashboard All-in-One, minh bạch và riêng tư."
 publish_to: 'none'
 
-version: 0.2.3+5
+version: 0.3.0+6
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
   webview_flutter: ^4.10.0
-  # Cần import trực tiếp để bật Hybrid Composition (sửa Omnibox không nhận tap)
   webview_flutter_android: ^4.3.0
   webview_win_floating: ^3.0.0
   shared_preferences: ^2.3.3

@@ -7,6 +7,7 @@ class TabStrip extends StatelessWidget {
   final ValueChanged<String> onSelect;
   final ValueChanged<String> onClose;
   final VoidCallback onAdd;
+  final VoidCallback? onAddIncognito;
 
   const TabStrip({
     super.key,
@@ -15,6 +16,7 @@ class TabStrip extends StatelessWidget {
     required this.onSelect,
     required this.onClose,
     required this.onAdd,
+    this.onAddIncognito,
   });
 
   @override
@@ -38,12 +40,16 @@ class TabStrip extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       color: active
-                          ? Colors.white.withOpacity(0.12)
+                          ? (tab.isIncognito
+                              ? Colors.purple.withOpacity(0.2)
+                              : Colors.white.withOpacity(0.12))
                           : Colors.white.withOpacity(0.04),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: active
-                            ? const Color(0xFF6C8CFF).withOpacity(0.5)
+                            ? (tab.isIncognito
+                                ? Colors.purpleAccent.withOpacity(0.6)
+                                : const Color(0xFF6C8CFF).withOpacity(0.5))
                             : Colors.transparent,
                       ),
                     ),
@@ -56,11 +62,21 @@ class TabStrip extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 1.5),
                           )
                         else
-                          const Icon(Icons.public, size: 14, color: Colors.white54),
+                          Icon(
+                            tab.isIncognito
+                                ? Icons.visibility_off
+                                : Icons.public,
+                            size: 14,
+                            color: tab.isIncognito
+                                ? Colors.purpleAccent
+                                : Colors.white54,
+                          ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            tab.title.isEmpty ? 'Tab mới' : tab.title,
+                            tab.title.isEmpty
+                                ? (tab.isIncognito ? 'Ẩn danh' : 'Tab mới')
+                                : tab.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -71,7 +87,8 @@ class TabStrip extends StatelessWidget {
                         ),
                         GestureDetector(
                           onTap: () => onClose(tab.id),
-                          child: const Icon(Icons.close, size: 14, color: Colors.white54),
+                          child: const Icon(Icons.close,
+                              size: 14, color: Colors.white54),
                         ),
                       ],
                     ),
@@ -84,7 +101,15 @@ class TabStrip extends StatelessWidget {
             icon: const Icon(Icons.add, size: 20),
             onPressed: onAdd,
             color: Colors.white70,
+            tooltip: 'Tab mới',
           ),
+          if (onAddIncognito != null)
+            IconButton(
+              icon: const Icon(Icons.visibility_off_outlined, size: 18),
+              onPressed: onAddIncognito,
+              color: Colors.purpleAccent,
+              tooltip: 'Tab ẩn danh',
+            ),
         ],
       ),
     );
