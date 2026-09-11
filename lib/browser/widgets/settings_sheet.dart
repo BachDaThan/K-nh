@@ -32,10 +32,13 @@ class _SettingsSheetState extends State<SettingsSheet> {
   late double _diversity;
   final _customDohController = TextEditingController();
 
+  late String _dohSelectedId;
+
   @override
   void initState() {
     super.initState();
     _diversity = widget.diversityService.index;
+    _dohSelectedId = widget.dohService.current.id;
     if (widget.dohService.current.isCustom) {
       _customDohController.text = widget.dohService.current.url;
     }
@@ -85,19 +88,18 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             ...DohProvider.presets.map((p) {
-              final selected = widget.dohService.current.id == p.id;
               return RadioListTile<String>(
                 dense: true,
                 title: Text(p.name, style: const TextStyle(fontSize: 14)),
                 value: p.id,
-                groupValue: widget.dohService.current.id,
+                groupValue: _dohSelectedId,
                 onChanged: (_) async {
+                  setState(() => _dohSelectedId = p.id);
                   await widget.dohService.setProvider(p);
                   widget.onChanged();
-                  setState(() {});
                 },
                 activeColor: const Color(0xFF6C8CFF),
-                selected: selected,
+                selected: _dohSelectedId == p.id,
               );
             }),
             RadioListTile<String>(
@@ -105,14 +107,15 @@ class _SettingsSheetState extends State<SettingsSheet> {
               title: const Text('DoH tùy chỉnh (NextDNS / AdGuard Home...)',
                   style: TextStyle(fontSize: 14)),
               value: 'custom',
-              groupValue: widget.dohService.current.id,
+              groupValue: _dohSelectedId,
               onChanged: (_) {
-                setState(() {});
+                // Bật chế độ custom ngay — hiện ô nhập URL
+                setState(() => _dohSelectedId = 'custom');
               },
               activeColor: const Color(0xFF6C8CFF),
+              selected: _dohSelectedId == 'custom',
             ),
-            if (widget.dohService.current.id == 'custom' ||
-                _customDohController.text.isNotEmpty)
+            if (_dohSelectedId == 'custom')
               Padding(
                 padding: const EdgeInsets.only(left: 16, right: 8, bottom: 8),
                 child: Row(
@@ -135,7 +138,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                         if (url.startsWith('https://')) {
                           await widget.dohService.setCustomUrl(url);
                           widget.onChanged();
-                          setState(() {});
+                          setState(() => _dohSelectedId = 'custom');
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
