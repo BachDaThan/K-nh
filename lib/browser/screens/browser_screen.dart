@@ -329,7 +329,23 @@ class _BrowserScreenState extends State<BrowserScreen> {
     // Chrome (TabStrip + Omnibox + BookmarkBar) nằm trong Material riêng
     // phía trên Expanded(WebView). Hybrid Composition + chỉ mount 1 WebView
     // active → Omnibox/TabStrip nhận đủ gesture, không bị PlatformView đè.
-    return Scaffold(
+    //
+    // Nút Back hệ thống: lùi WebView history trước; hết history mới pop về Dashboard.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final tab = _activeTab;
+        if (tab != null) {
+          final canBack = await _engine.canGoBack(tab.id);
+          if (canBack) {
+            await _engine.goBack(tab.id);
+            return;
+          }
+        }
+        if (mounted) Navigator.of(context).maybePop();
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFF121212),
       body: SafeArea(
         child: Column(
@@ -397,6 +413,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
           ],
         ),
       ),
-    );
+      ), // Scaffold
+    ); // PopScope
   }
 }
