@@ -1,18 +1,15 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
-import 'package:flutter/foundation.dart';
 
 import '../services/ai_settings_service.dart';
 import '../services/ai_chat_service.dart';
 import '../services/snippet_service.dart';
 
 /// Bước 4 — AI Builder & Code Runner
-/// Editor + chạy Python (Pyodide WASM) / JavaScript trong WebView sandbox.
-/// AI dùng API key cá nhân (OpenAI-compatible), 100% client-side.
 class AiBuilderScreen extends StatefulWidget {
   const AiBuilderScreen({super.key});
 
@@ -26,23 +23,22 @@ class _AiBuilderScreenState extends State<AiBuilderScreen> {
   final _snippets = SnippetService();
 
   final _codeCtrl = TextEditingController(
-    text: '# Python (Pyodide)\nprint("Xin chào từ Kính!")\nfor i in range(3):\n    print(i)\n',
+    text:
+        '// JavaScript — thử nút Chạy\nconsole.log("Xin chào từ Kính!");\n2 + 2;\n',
   );
   final _promptCtrl = TextEditingController();
   final _outputCtrl = TextEditingController();
 
-  String _language = 'python'; // python | javascript
+  String _language = 'javascript';
   bool _ready = false;
   bool _runnerReady = false;
   bool _running = false;
   bool _aiBusy = false;
   WebViewController? _runner;
 
-  static const _systemCode = '''
-Bạn là trợ lý lập trình trong app Kính.
-Trả lời ngắn gọn. Khi viết code, chỉ in code thuần (không markdown) trừ khi user hỏi giải thích.
-Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
-''';
+  static const _systemCode =
+      'Bạn là trợ lý lập trình trong app Kính. Trả lời ngắn. '
+      'Khi viết code, ưu tiên code thuần Python hoặc JavaScript.';
 
   @override
   void initState() {
@@ -62,94 +58,135 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
     final c = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF0D0D0D))
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageFinished: (_) {
-          if (mounted) setState(() => _runnerReady = true);
+      ..addJavaScriptChannel(
+        'KinhRunner',
+        onMessageReceived: (msg) {
+          final raw = msg.message;
+          try {
+            final map = jsonDecode(raw) as Map<String, dynamic>;
+            final out = map['out']?.toString() ?? '';
+            final ok = map['ok'] == true;
+            if (!mounted) return;
+            setState(() {
+              _running = false;
+              if (out.isNotEmpty) {
+                _outputCtrl.text = out;
+              } else {
+                _outputCtrl.text = ok ? '(không có output)' : 'Lỗi (không có chi tiết)';
+              }
+            });
+          } catch (e) {
+            if (!mounted) return;
+            setState(() {
+              _running = false;
+              _outputCtrl.text = 'Parse: $e\nRaw: $raw';
+            });
+          }
         },
-      ));
+      )
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (_) {
+            if (mounted) setState(() => _runnerReady = true);
+          },
+        ),
+      );
+
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      final p = c.platform;
-      if (p is AndroidWebViewController) {
+      final plat = c.platform;
+      if (plat is AndroidWebViewController) {
         AndroidWebViewController.enableDebugging(true);
       }
     }
+
     c.loadHtmlString(_runnerHtml);
     _runner = c;
   }
 
-  /// Sandbox: JS eval ngay; Python qua Pyodide CDN (cần mạng lần đầu).
-  static const _runnerHtml = '''
+  /// Sandbox HTML: kết quả gửi về Flutter qua KinhRunner.postMessage
+  static const _runnerHtml = r'''
 <!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8"/>
+<html><head><meta charset="utf-8"/>
 <style>
-  body { margin:0; background:#0d0d0d; color:#c8c8c8; font:12px monospace; }
-  #status { padding:6px 8px; color:#6C8CFF; }
-</style>
-</head>
+body{margin:0;background:#0d0d0d;color:#aaa;font:12px monospace}
+#status{padding:6px 8px;color:#6C8CFF}
+</style></head>
 <body>
-<div id="status">Runner sẵn sàng (JS). Python tải khi chạy lần đầu…</div>
+<div id="status">Runner JS sẵn sàng. Python tải khi cần.</div>
 <script>
-  let pyodide = null;
-  let pyLoading = null;
+let pyodide = null, pyLoading = null;
 
-  async function ensurePy() {
-    if (pyodide) return pyodide;
-    if (pyLoading) return pyLoading;
-    document.getElementById('status').innerText = 'Đang tải Pyodide…';
-    pyLoading = (async () => {
+async function ensurePy() {
+  if (pyodide) return pyodide;
+  if (pyLoading) return pyLoading;
+  document.getElementById('status').innerText = 'Đang tải Pyodide…';
+  pyLoading = (async () => {
+    await new Promise((res, rej) => {
       const s = document.createElement('script');
       s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
+      s.onload = res; s.onerror = () => rej(new Error('Không tải được Pyodide (cần mạng)'));
       document.head.appendChild(s);
-      await new Promise((res, rej) => { s.onload = res; s.onerror = rej; });
-      pyodide = await loadPyodide();
-      document.getElementById('status').innerText = 'Pyodide sẵn sàng';
-      return pyodide;
-    })();
-    return pyLoading;
-  }
+    });
+    pyodide = await loadPyodide();
+    document.getElementById('status').innerText = 'Pyodide sẵn sàng';
+    return pyodide;
+  })();
+  return pyLoading;
+}
 
-  async function runJs(code) {
-    const logs = [];
-    const orig = console.log;
-    console.log = (...a) => { logs.push(a.map(String).join(' ')); };
-    try {
-      const result = await eval('(async()=>{\\n' + code + '\\n})()');
-      console.log = orig;
-      if (result !== undefined) logs.push(String(result));
-      return { ok: true, out: logs.join('\\n') };
-    } catch (e) {
-      console.log = orig;
-      return { ok: false, out: String(e) };
-    }
+async function runJs(code) {
+  const logs = [];
+  const olog = console.log, oerr = console.error;
+  console.log = (...a) => logs.push(a.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' '));
+  console.error = (...a) => logs.push('[err] ' + a.map(String).join(' '));
+  try {
+    const result = await eval('(async()=>{\n' + code + '\n})()');
+    console.log = olog; console.error = oerr;
+    if (result !== undefined) logs.push(String(result));
+    return { ok: true, out: logs.join('\n') };
+  } catch (e) {
+    console.log = olog; console.error = oerr;
+    return { ok: false, out: String(e && e.stack ? e.stack : e) };
   }
+}
 
-  async function runPy(code) {
-    try {
-      const py = await ensurePy();
-      let out = '';
-      py.setStdout({ batched: (s) => { out += s + '\\n'; } });
-      py.setStderr({ batched: (s) => { out += s + '\\n'; } });
-      await py.runPythonAsync(code);
-      return { ok: true, out: out.trimEnd() };
-    } catch (e) {
-      return { ok: false, out: String(e) };
-    }
+async function runPy(code) {
+  try {
+    const py = await ensurePy();
+    let out = '';
+    py.setStdout({ batched: (s) => { out += s + '\n'; } });
+    py.setStderr({ batched: (s) => { out += s + '\n'; } });
+    await py.runPythonAsync(code);
+    return { ok: true, out: out.trimEnd() };
+  } catch (e) {
+    return { ok: false, out: String(e) };
   }
+}
 
-  async function runCode(lang, code) {
-    if (lang === 'python') return runPy(code);
-    return runJs(code);
+async function runCode(lang, code) {
+  let r;
+  try {
+    r = (lang === 'python') ? await runPy(code) : await runJs(code);
+  } catch (e) {
+    r = { ok: false, out: String(e) };
   }
+  try {
+    KinhRunner.postMessage(JSON.stringify(r));
+  } catch (e) {
+    document.getElementById('status').innerText = 'postMessage fail: ' + e;
+  }
+}
 </script>
-</body>
-</html>
+</body></html>
 ''';
 
   Future<void> _runCode() async {
     final code = _codeCtrl.text;
     if (code.trim().isEmpty || _runner == null) return;
+    if (!_runnerReady) {
+      setState(() => _outputCtrl.text = 'Runner chưa sẵn sàng — đợi 1–2 giây rồi thử lại.');
+      return;
+    }
     setState(() {
       _running = true;
       _outputCtrl.text = 'Đang chạy ($_language)…';
@@ -157,30 +194,28 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
     try {
       final escaped = jsonEncode(code);
       final lang = jsonEncode(_language);
-      final raw = await _runner!.runJavaScriptReturningResult(
-        'runCode($lang, $escaped).then(r => JSON.stringify(r))',
-      );
-      var s = raw?.toString() ?? '{}';
-      // WebView sometimes wraps result in quotes
-      if (s.startsWith('"') && s.endsWith('"')) {
-        s = jsonDecode(s) as String;
-      }
-      final map = jsonDecode(s) as Map<String, dynamic>;
-      final out = map['out']?.toString() ?? '';
-      final ok = map['ok'] == true;
-      setState(() {
-        _outputCtrl.text = out.isEmpty
-            ? (ok ? '(không có output)' : 'Lỗi không rõ')
-            : out;
+      // Không await Promise từ Dart — kết quả về qua channel KinhRunner
+      await _runner!.runJavaScript('runCode($lang, $escaped)');
+      Future.delayed(const Duration(seconds: 90), () {
+        if (mounted && _running) {
+          setState(() {
+            _running = false;
+            if (_outputCtrl.text.startsWith('Đang chạy')) {
+              _outputCtrl.text =
+                  'Timeout. Python lần đầu cần mạng để tải Pyodide.\nThử lại hoặc chọn JavaScript.';
+            }
+          });
+        }
       });
     } catch (e) {
-      setState(() => _outputCtrl.text = 'Lỗi runner: $e');
-    } finally {
-      if (mounted) setState(() => _running = false);
+      setState(() {
+        _running = false;
+        _outputCtrl.text = 'Lỗi runner: $e';
+      });
     }
   }
 
-  Future<void> _askAi({bool applyCode = false}) async {
+  Future<void> _askAi({required bool applyCode}) async {
     final prompt = _promptCtrl.text.trim();
     if (prompt.isEmpty) return;
     setState(() => _aiBusy = true);
@@ -188,12 +223,8 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
       final user = applyCode
           ? 'Sửa/viết code $_language theo yêu cầu:\n$prompt\n\nCode hiện tại:\n${_codeCtrl.text}'
           : prompt;
-      final reply = await _chat.complete(
-        system: _systemCode,
-        user: user,
-      );
+      final reply = await _chat.complete(system: _systemCode, user: user);
       if (applyCode) {
-        // Lấy code nếu AI bọc ``` 
         var code = reply;
         final m = RegExp(r'```(?:python|javascript|js)?\n([\s\S]*?)```')
             .firstMatch(reply);
@@ -219,10 +250,13 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
         final c = TextEditingController(text: 'Snippet');
         return AlertDialog(
           title: const Text('Lưu snippet'),
-          content: TextField(controller: c, decoration: const InputDecoration(labelText: 'Tên')),
+          content: TextField(
+              controller: c, decoration: const InputDecoration(labelText: 'Tên')),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, c.text.trim()), child: const Text('Lưu')),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, c.text.trim()),
+                child: const Text('Lưu')),
           ],
         );
       },
@@ -234,9 +268,10 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
       code: _codeCtrl.text,
     ));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã lưu snippet'), behavior: SnackBarBehavior.floating),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Đã lưu snippet'),
+        behavior: SnackBarBehavior.floating,
+      ));
       setState(() {});
     }
   }
@@ -268,7 +303,7 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               Text(
-                'Lưu trên máy. Dùng endpoint OpenAI-compatible (OpenAI, Groq, OpenRouter, LM Studio…).',
+                'OpenAI-compatible: OpenAI, Groq, OpenRouter, LM Studio…',
                 style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
               ),
               const SizedBox(height: 12),
@@ -276,30 +311,25 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
                 controller: keyCtrl,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'API Key',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
+                    labelText: 'API Key', border: OutlineInputBorder(), isDense: true),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: baseCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Base URL',
-                  hintText: 'https://api.openai.com/v1',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
+                    labelText: 'Base URL',
+                    hintText: 'https://api.openai.com/v1',
+                    border: OutlineInputBorder(),
+                    isDense: true),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: modelCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Model',
-                  hintText: 'gpt-4o-mini',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
+                    labelText: 'Model',
+                    hintText: 'gpt-4o-mini',
+                    border: OutlineInputBorder(),
+                    isDense: true),
               ),
               const SizedBox(height: 12),
               FilledButton(
@@ -336,12 +366,13 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
             children: [
               const Padding(
                 padding: EdgeInsets.all(12),
-                child: Text('Snippets đã lưu',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child: Text('Snippets', style: TextStyle(fontWeight: FontWeight.w600)),
               ),
               Expanded(
                 child: items.isEmpty
-                    ? const Center(child: Text('Chưa có snippet', style: TextStyle(color: Colors.white54)))
+                    ? const Center(
+                        child: Text('Chưa có snippet',
+                            style: TextStyle(color: Colors.white54)))
                     : ListView.builder(
                         itemCount: items.length,
                         itemBuilder: (_, i) {
@@ -395,45 +426,21 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Text('AI Builder'),
         actions: [
+          IconButton(icon: const Icon(Icons.folder_open), onPressed: _openSnippets),
+          IconButton(icon: const Icon(Icons.save_outlined), onPressed: _saveSnippet),
           IconButton(
-            icon: const Icon(Icons.folder_open),
-            tooltip: 'Snippets',
-            onPressed: _openSnippets,
-          ),
-          IconButton(
-            icon: const Icon(Icons.save_outlined),
-            tooltip: 'Lưu snippet',
-            onPressed: _saveSnippet,
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.settings,
-              color: _settings.hasKey ? const Color(0xFF6C8CFF) : Colors.white54,
-            ),
-            tooltip: 'AI Settings',
+            icon: Icon(Icons.settings,
+                color: _settings.hasKey ? const Color(0xFF6C8CFF) : Colors.white54),
             onPressed: _openAiSettings,
           ),
         ],
       ),
       body: Column(
         children: [
-          // Language + run
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Row(
               children: [
-                ChoiceChip(
-                  label: const Text('Python'),
-                  selected: _language == 'python',
-                  onSelected: (_) => setState(() {
-                    _language = 'python';
-                    if (_codeCtrl.text.contains('console.log')) {
-                      _codeCtrl.text =
-                          '# Python\nprint("Hello")\n';
-                    }
-                  }),
-                ),
-                const SizedBox(width: 8),
                 ChoiceChip(
                   label: const Text('JavaScript'),
                   selected: _language == 'javascript',
@@ -441,7 +448,18 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
                     _language = 'javascript';
                     if (_codeCtrl.text.contains('print(')) {
                       _codeCtrl.text =
-                          '// JavaScript\nconsole.log("Hello");\n';
+                          'console.log("Hello");\n2 + 2;\n';
+                    }
+                  }),
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('Python'),
+                  selected: _language == 'python',
+                  onSelected: (_) => setState(() {
+                    _language = 'python';
+                    if (_codeCtrl.text.contains('console.log')) {
+                      _codeCtrl.text = 'print("Hello")\nprint(2 + 2)\n';
                     }
                   }),
                 ),
@@ -450,17 +468,14 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
                   onPressed: _running || !_runnerReady ? null : _runCode,
                   icon: _running
                       ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.play_arrow, size: 20),
-                  label: const Text('Chạy'),
+                  label: Text(_runnerReady ? 'Chạy' : '…'),
                 ),
               ],
             ),
           ),
-          // Editor
           Expanded(
             flex: 3,
             child: Padding(
@@ -485,7 +500,7 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.all(12),
-                    hintText: 'Viết code tại đây…',
+                    hintText: 'Viết code…',
                     hintStyle: TextStyle(color: Colors.white30),
                   ),
                   keyboardType: TextInputType.multiline,
@@ -494,7 +509,6 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
             ),
           ),
           const SizedBox(height: 8),
-          // Output
           Expanded(
             flex: 2,
             child: Padding(
@@ -519,14 +533,13 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.all(12),
-                    hintText: 'Output / AI response',
+                    hintText: 'Output / AI',
                     hintStyle: TextStyle(color: Colors.white24),
                   ),
                 ),
               ),
             ),
           ),
-          // AI prompt bar
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
             child: Row(
@@ -537,12 +550,11 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
                     style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
                       hintText: _settings.hasKey
-                          ? 'Hỏi AI hoặc mô tả code cần viết…'
-                          : 'Cần API key (⚙️) để dùng AI',
+                          ? 'Hỏi AI…'
+                          : 'Cần API key (⚙️)',
                       isDense: true,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
+                          borderRadius: BorderRadius.circular(24)),
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 10),
                     ),
@@ -554,22 +566,17 @@ Ngôn ngữ ưu tiên: Python hoặc JavaScript tùy ngữ cảnh.
                   onPressed: _aiBusy ? null : () => _askAi(applyCode: false),
                   icon: _aiBusy
                       ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                          width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.send, size: 18),
-                  tooltip: 'Hỏi AI',
                 ),
                 IconButton.filledTonal(
                   onPressed: _aiBusy ? null : () => _askAi(applyCode: true),
                   icon: const Icon(Icons.auto_fix_high, size: 18),
-                  tooltip: 'AI viết/sửa code vào editor',
                 ),
               ],
             ),
           ),
-          // Hidden runner webview
           SizedBox(
             height: 1,
             width: 1,
