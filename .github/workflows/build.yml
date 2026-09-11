@@ -45,6 +45,30 @@ jobs:
         run: |
           sed -i 's/android:label="[^"]*"/android:label="Kính"/' android/app/src/main/AndroidManifest.xml
 
+      # Bắt buộc: release APK cần INTERNET — thiếu thì WebView báo net::ERR_CACHE_MISS
+      - name: Thêm quyền INTERNET vào AndroidManifest (release)
+        shell: bash
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if grep -q 'android.permission.INTERNET' "$MANIFEST"; then
+            echo "INTERNET permission already present"
+          else
+            # Chèn 2 permission ngay sau dòng mở thẻ manifest
+            awk '
+              /<manifest[ >]/ && !done {
+                print
+                print "    <uses-permission android:name=\"android.permission.INTERNET\"/>"
+                print "    <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>"
+                done=1
+                next
+              }
+              { print }
+            ' "$MANIFEST" > "$MANIFEST.tmp" && mv "$MANIFEST.tmp" "$MANIFEST"
+            echo "Inserted INTERNET permission"
+          fi
+          echo "=== AndroidManifest permissions ==="
+          grep -E 'uses-permission' "$MANIFEST" || true
+
       - name: Tải dependencies
         run: flutter pub get
 

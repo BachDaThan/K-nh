@@ -59,7 +59,7 @@ class ChromiumBrowserEngine implements BrowserEngine {
         ),
       );
 
-    // Android: bật DOM storage, geolocation off, etc.
+    // Android: network + cache đúng cách (tránh net::ERR_CACHE_MISS)
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       final platform = controller.platform;
       if (platform is AndroidWebViewController) {
@@ -84,10 +84,25 @@ class ChromiumBrowserEngine implements BrowserEngine {
     onLoadingChanged?.call(tabId, true);
     onUrlChanged?.call(tabId, target);
     try {
-      await c.loadRequest(Uri.parse(target));
+      // Xóa pending trùng (tránh load 2 lần → ERR_CACHE_MISS trên một số máy)
+      _pendingUrl.remove(tabId);
+      await c.loadRequest(
+        Uri.parse(target),
+        headers: const {
+          // Ép lấy từ mạng, không only-if-cached
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      );
     } catch (e) {
       debugPrint('WebView loadRequest failed: $e');
       onLoadingChanged?.call(tabId, false);
+      // Fallback không header
+      try {
+        await c.loadRequest(Uri.parse(target));
+      } catch (e2) {
+        debugPrint('WebView loadRequest fallback failed: $e2');
+      }
     }
   }
 
