@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'screens/dashboard_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const KinhApp());
 }
 
-/// App gốc "Kính" — Dashboard/Trình duyệt All-in-One.
-/// Bước 1: khung Bento Grid Dashboard, Dark Mode.
-/// Các cụm tính năng khác (browser engine, AI builder, sync...)
-/// sẽ được thêm dần ở các bước tiếp theo, mỗi bước build được ngay.
+/// App gốc "Kính" — Dashboard / Trình duyệt All-in-One.
+///
+/// Bước 1: khung Bento Grid Dashboard.
+/// Bước 2: Browser engine (Chromium/WebView2) qua abstraction BrowserEngine,
+///         Omnibox, Tab, Bookmark, Download, DoH, Search Diversity.
 class KinhApp extends StatelessWidget {
   const KinhApp({super.key});
 

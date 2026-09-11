@@ -9,8 +9,6 @@ enum BentoSize {
 }
 
 /// Đại diện cho một ô (widget hoặc lối tắt app) trên Dashboard.
-/// Đây là model tối giản cho Bước 1 — sau này sẽ mở rộng thêm
-/// loại "appShortcut" (mở app hệ thống qua Intent) ở bước App Launcher.
 class BentoItem {
   final String id;
   final String title;

@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/bento_item.dart';
 
 /// Một ô Bento Grid, phong cách Glassmorphism trên nền tối.
-/// - Bo góc lớn, viền mờ nhẹ, nền kính mờ (BackdropFilter blur).
-/// - Hiệu ứng Ripple chuẩn Material 3 khi chạm.
 class BentoCard extends StatelessWidget {
   final BentoItem item;
   final VoidCallback? onTap;

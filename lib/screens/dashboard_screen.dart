@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/bento_item.dart';
 import '../widgets/bento_card.dart';
+import '../browser/screens/browser_screen.dart';
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
-/// Bước 1: hiển thị lưới Bento Grid tĩnh, responsive 2 cột (mobile)
-/// / 4 cột (desktop/tablet), theo đúng thiết kế trong hồ sơ dự án.
-///
-/// Các bước sau sẽ thêm: drag & drop sắp xếp lại ô, App Launcher quét
-/// app hệ thống, widget thời tiết/wifi/ghi chú thật, thanh Tab trình
-/// duyệt phía trên, Sidebar bên trái.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
-  // Danh sách mẫu — sẽ thay bằng dữ liệu thật + có thể tùy biến ở bước sau.
   static final List<BentoItem> _items = [
     const BentoItem(
       id: 'search',
-      title: 'Tìm kiếm',
+      title: 'Tìm kiếm / Trình duyệt',
       icon: Icons.search_rounded,
       size: BentoSize.wide,
       accentColor: Color(0xFF6C8CFF),
@@ -55,6 +49,22 @@ class DashboardScreen extends StatelessWidget {
     ),
   ];
 
+  void _onItemTap(BuildContext context, BentoItem item) {
+    if (item.id == 'search') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const BrowserScreen()),
+      );
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${item.title} — sẽ hoạt động ở bước tiếp theo'),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,15 +76,14 @@ class DashboardScreen extends StatelessWidget {
 
             return CustomScrollView(
               slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                const SliverPadding(
+                  padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
                   sliver: SliverToBoxAdapter(
                     child: Row(
                       children: [
-                        Icon(Icons.home_rounded,
-                            color: Theme.of(context).colorScheme.primary),
-                        const SizedBox(width: 8),
-                        const Text(
+                        Icon(Icons.home_rounded, color: Color(0xFF6C8CFF)),
+                        SizedBox(width: 8),
+                        Text(
                           'Kính',
                           style: TextStyle(
                             color: Colors.white,
@@ -86,6 +95,30 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                // Nút mở trình duyệt nhanh
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  sliver: SliverToBoxAdapter(
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const BrowserScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.language_rounded),
+                      label: const Text('Mở trình duyệt'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF6C8CFF),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 14),
+                      ),
+                    ),
+                  ),
+                ),
+                // Bento grid
                 SliverPadding(
                   padding: const EdgeInsets.all(16),
                   sliver: SliverGrid(
@@ -100,15 +133,7 @@ class DashboardScreen extends StatelessWidget {
                         final item = _items[index];
                         return BentoCard(
                           item: item,
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${item.title} — sẽ hoạt động ở bước tiếp theo'),
-                                duration: const Duration(seconds: 1),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
+                          onTap: () => _onItemTap(context, item),
                         );
                       },
                       childCount: _items.length,
