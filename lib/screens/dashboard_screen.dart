@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/bento_item.dart';
 import '../widgets/bento_card.dart';
 import '../browser/screens/browser_screen.dart';
+import '../ai/screens/ai_builder_screen.dart';
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
 class DashboardScreen extends StatelessWidget {
@@ -14,6 +15,13 @@ class DashboardScreen extends StatelessWidget {
       icon: Icons.search_rounded,
       size: BentoSize.wide,
       accentColor: Color(0xFF6C8CFF),
+    ),
+    const BentoItem(
+      id: 'ai_builder',
+      title: 'AI Builder',
+      icon: Icons.auto_awesome,
+      size: BentoSize.wide,
+      accentColor: Color(0xFFB388FF),
     ),
     const BentoItem(
       id: 'weather',
@@ -53,6 +61,12 @@ class DashboardScreen extends StatelessWidget {
     if (item.id == 'search') {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const BrowserScreen()),
+      );
+      return;
+    }
+    if (item.id == 'ai_builder') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AiBuilderScreen()),
       );
       return;
     }

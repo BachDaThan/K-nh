@@ -1,39 +1,30 @@
 # Tiến độ dự án Kính
 
-> File này để bất kỳ phiên chat mới nào với Claude/Grok cũng biết đang làm
-> đến đâu. Mở chat mới, dán link repo này + nói "đọc PROGRESS.md rồi
-> làm tiếp" là đủ, không cần upload lại gì.
+## Trạng thái hiện tại: Bước 4/6 — AI Builder & Code Runner ✅
 
-## Trạng thái hiện tại: Bước 3/6 — Bảo mật & Lịch sử ✅
+### Bước 4 — Đã làm
+- [x] **AI Builder** màn hình riêng (`lib/ai/screens/ai_builder_screen.dart`)
+- [x] **Code editor** monospace (Python / JavaScript)
+- [x] **Code Runner sandbox**: WebView ẩn
+  - JavaScript: `eval` trong sandbox page
+  - Python: **Pyodide WASM** (CDN, tải lần đầu khi chạy Python)
+- [x] **AI API key cá nhân**: Settings trong app — Base URL OpenAI-compatible + model
+- [x] **Chat / Generate code**: hỏi AI hoặc “AI sửa code vào editor”
+- [x] **Snippets**: lưu / mở / xóa local (SharedPreferences)
+- [x] Dashboard card **AI Builder**
 
-### Bước 3 — Đã làm
-- [x] **Lịch sử duyệt** (`HistoryService`): lưu local, tìm kiếm, xóa từng mục / theo domain / xóa hết
-- [x] **UI Lịch sử** (`HistorySheet`): filter domain, mở lại URL, xóa
-- [x] **Visual Activity Log** (`ActivityLogService` + `ActivityLogSheet`): navigation, page finished, clear, ẩn danh…
-- [x] **Chế độ ẩn danh**: tab `isIncognito` — không ghi lịch sử ra đĩa; activity log ephemeral (RAM only); nút mắt trên TabStrip
-- [x] **Dọn dẹp** (`PrivacySheet`): xóa lịch sử / cookie / cache / tất cả; xóa lịch sử theo domain
-- [x] Menu ⋮ → Bảo mật & Lịch sử
-
-### Bước 2 — Đã làm (tóm tắt)
-- BrowserEngine abstraction + ChromiumBrowserEngine (webview_flutter)
-- Omnibox full-width, Tab, Bookmark, Download, DoH UI, Search Diversity
-- Hybrid Composition, INTERNET permission trong CI, system Back thông minh
-
-### Bước 1 — Đã làm
-- Dashboard Bento Grid, icon, GitHub Actions APK + Windows
+### Bước 3 — Bảo mật & Lịch sử ✅
+### Bước 2 — Trình duyệt lõi ✅
+### Bước 1 — Dashboard ✅
 
 ### Package
-- Version: `0.3.0+6`
-- Package Android: `com.bachdathan.kinh`
+- Version: `0.4.0+7`
 
-### Các bước tiếp theo
-- [ ] **Bước 4** — AI Builder & Code Runner
-- [ ] **Bước 5** — Cloud Sync & Chia sẻ / OTA
+### Tiếp theo
+- [ ] **Bước 5** — Cloud Sync & Chia sẻ / OTA (có chữ ký)
 - [ ] **Bước 6** — App Launcher, Sidebar, Theme
 
-### Quyết định đã chốt
-- Không commit `android/` / `windows/` — workflow `flutter create`
-- Không silent-install
-- Engine tạm: Chromium/WebView2; dài hạn GeckoView khi chín
-- 100% client-side
-
+### Ghi chú Bước 4
+- Không nhúng full Monaco/Xterm.js native (tránh phình APK + phức tạp Windows); editor Flutter + runner WASM/JS đủ dùng.
+- Pyodide cần mạng lần đầu; sau đó cache theo WebView.
+- API key không bao giờ gửi server Kính (không có server).
