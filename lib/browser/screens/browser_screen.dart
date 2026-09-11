@@ -39,6 +39,11 @@ class _BrowserScreenState extends State<BrowserScreen> {
   final _omniboxController = TextEditingController();
   bool _servicesReady = false;
 
+  /// URL gốc khi tab được tạo (vd. google.com). Back ở trang này → về Dashboard.
+  final Map<String, String> _tabRootUrl = {};
+  /// User đã điều hướng ra khỏi trang chủ tab chưa.
+  final Map<String, bool> _tabLeftRoot = {};
+
   @override
   void initState() {
     super.initState();
@@ -55,14 +60,22 @@ class _BrowserScreenState extends State<BrowserScreen> {
       }
     };
     _engine.onUrlChanged = (tabId, url) {
-      final t = _findTab(tabId);
-      if (t != null && mounted) {
+      final tab = _findTab(tabId);
+      if (tab != null && mounted) {
+        final u = url ?? tab.url;
         setState(() {
-          t.url = url ?? t.url;
+          tab.url = u;
           if (tabId == _activeTabId) {
-            _omniboxController.text = t.url == 'about:blank' ? '' : t.url;
+            _omniboxController.text = u == 'about:blank' ? '' : u;
           }
         });
+        // Đánh dấu đã rời trang chủ tab nếu URL khác root
+        final root = _tabRootUrl[tabId];
+        if (root != null && u.isNotEmpty && u != 'about:blank') {
+          if (!_sameSite(root, u)) {
+            _tabLeftRoot[tabId] = true;
+          }
+        }
       }
     };
     _engine.onProgressChanged = (tabId, progress) {
@@ -141,6 +154,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
     final url = (initialUrl != null && initialUrl.isNotEmpty)
         ? initialUrl
         : 'https://www.google.com';
+    _tabRootUrl[tab.id] = url;
+    _tabLeftRoot[tab.id] = false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _loadInTab(tab.id, url);
@@ -154,6 +169,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
     final idx = _tabs.indexWhere((t) => t.id == id);
     if (idx < 0) return;
     _engine.disposeTab(id);
+    _tabRootUrl.remove(id);
+    _tabLeftRoot.remove(id);
     setState(() {
       _tabs.removeAt(idx);
       if (_tabs.isEmpty) {
@@ -188,7 +205,13 @@ class _BrowserScreenState extends State<BrowserScreen> {
   Future<void> _onOmniboxSubmit(String value) async {
     final tab = _activeTab;
     if (tab == null || value.trim().isEmpty) return;
-    await _loadInTab(tab.id, value.trim());
+    final raw = value.trim();
+    // User chủ động gõ URL/tìm kiếm → coi như đã rời trang chủ tab
+    final root = _tabRootUrl[tab.id];
+    if (root == null || !_sameSite(root, raw)) {
+      _tabLeftRoot[tab.id] = true;
+    }
+    await _loadInTab(tab.id, raw);
   }
 
   Future<void> _toggleBookmark() async {
@@ -316,6 +339,47 @@ class _BrowserScreenState extends State<BrowserScreen> {
     super.dispose();
   }
 
+  /// Cùng site? (bỏ www. và so sánh host)
+  bool _sameSite(String a, String b) {
+    String host(String u) {
+      try {
+        final uri = Uri.parse(u.contains('://') ? u : 'https://$u');
+        return uri.host.replaceFirst(RegExp(r'^www\\.'), '');
+      } catch (_) {
+        return u;
+      }
+    }
+    return host(a) == host(b);
+  }
+
+  /// Back hệ thống:
+  /// - Đang ở trang chủ tab (chưa đi đâu) → về Dashboard ngay
+  /// - Còn lịch sử WebView → lùi trang
+  /// - Hết lịch sử → về Dashboard
+  Future<void> _handleSystemBack() async {
+    final tab = _activeTab;
+    if (tab == null) {
+      if (mounted) Navigator.of(context).maybePop();
+      return;
+    }
+
+    final leftRoot = _tabLeftRoot[tab.id] == true;
+    final canBack = await _engine.canGoBack(tab.id);
+
+    // Chưa từng rời trang chủ tab → Back = thoát Browser (không kẹt redirect Google)
+    if (!leftRoot) {
+      if (mounted) Navigator.of(context).maybePop();
+      return;
+    }
+
+    if (canBack) {
+      await _engine.goBack(tab.id);
+      return;
+    }
+
+    if (mounted) Navigator.of(context).maybePop();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_servicesReady) {
@@ -333,17 +397,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
     // Nút Back hệ thống: lùi WebView history trước; hết history mới pop về Dashboard.
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        final tab = _activeTab;
-        if (tab != null) {
-          final canBack = await _engine.canGoBack(tab.id);
-          if (canBack) {
-            await _engine.goBack(tab.id);
-            return;
-          }
-        }
-        if (mounted) Navigator.of(context).maybePop();
+        _handleSystemBack();
       },
       child: Scaffold(
       backgroundColor: const Color(0xFF121212),
