@@ -1,18 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import 'browser_engine.dart';
 
 /// Implementation dùng System WebView (Chromium) trên Android
 /// và WebView2 trên Windows (qua webview_flutter + webview_win_floating).
 ///
-/// Thay thế flutter_inappwebview vì package đó lỗi build trên
-/// Flutter 3.47 + AGP mới (proguard) và MSVC mới (experimental coroutine).
+/// Fix Omnibox không nhận tap: bật Hybrid Composition trên Android
+/// để PlatformView không đè / cướp gesture của widget Flutter phía trên.
 class ChromiumBrowserEngine implements BrowserEngine {
   final Map<String, WebViewController> _controllers = {};
   final Map<String, double> _zoomLevels = {};
-  static bool _platformRegistered = false;
 
   void Function(String tabId, String? title)? onTitleChanged;
   void Function(String tabId, String? url)? onUrlChanged;
@@ -21,20 +21,7 @@ class ChromiumBrowserEngine implements BrowserEngine {
   void Function(String tabId, bool canBack, bool canForward)? onNavStateChanged;
   void Function(String tabId, String url, String fileName)? onDownloadStart;
 
-  void _ensurePlatform() {
-    if (_platformRegistered) return;
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
-      try {
-        // ignore: depend_on_referenced_packages
-        // Đăng ký Windows WebView2 — import động qua conditional không ổn định
-        // trên mọi SDK; webview_win_floating tự register qua pubspec plugin.
-      } catch (_) {}
-    }
-    _platformRegistered = true;
-  }
-
   WebViewController _createController(String tabId) {
-    _ensurePlatform();
     final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF121212))
@@ -75,15 +62,31 @@ class ChromiumBrowserEngine implements BrowserEngine {
     return controller;
   }
 
+  /// Chỉ tạo WebViewWidget cho tab đang active (tránh nhiều PlatformView
+  /// cùng chiếm gesture). Controller vẫn giữ trong map khi đổi tab.
   @override
   Widget buildView({
     required String tabId,
     required VoidCallback onCreated,
   }) {
-    final existing = _controllers[tabId];
-    final controller = existing ?? _createController(tabId);
+    final controller = _controllers[tabId] ?? _createController(tabId);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => onCreated());
+
+    // Android: Hybrid Composition — PlatformView nằm đúng trong hierarchy,
+    // widget Flutter phía trên (Omnibox, TabStrip) nhận được tap/keyboard.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      final platformController = controller.platform;
+      if (platformController is AndroidWebViewController) {
+        return WebViewWidget.fromPlatformCreationParams(
+          key: ValueKey('webview_hc_$tabId'),
+          params: AndroidWebViewWidgetCreationParams(
+            controller: platformController,
+            displayWithHybridComposition: true,
+          ),
+        );
+      }
+    }
 
     return WebViewWidget(
       key: ValueKey('webview_$tabId'),
@@ -93,10 +96,15 @@ class ChromiumBrowserEngine implements BrowserEngine {
 
   WebViewController? _c(String tabId) => _controllers[tabId];
 
+  /// Đảm bảo controller tồn tại trước khi load (khi tab mới chưa buildView).
+  void ensureController(String tabId) {
+    _controllers[tabId] ?? _createController(tabId);
+  }
+
   @override
   Future<void> loadUrl(String tabId, String urlOrQuery) async {
-    var c = _c(tabId);
-    c ??= _createController(tabId);
+    ensureController(tabId);
+    final c = _c(tabId)!;
 
     String target = urlOrQuery.trim();
     if (target.isEmpty) return;

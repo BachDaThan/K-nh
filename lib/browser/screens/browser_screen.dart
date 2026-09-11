@@ -319,67 +319,72 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
     final active = _activeTab;
 
+    // Chrome (TabStrip + Omnibox + BookmarkBar) nằm trong Material riêng
+    // phía trên Expanded(WebView). Hybrid Composition + chỉ mount 1 WebView
+    // active → Omnibox/TabStrip nhận đủ gesture, không bị PlatformView đè.
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       body: SafeArea(
         child: Column(
           children: [
-            // Tab strip
-            TabStrip(
-              tabs: _tabs,
-              activeTabId: _activeTabId,
-              onSelect: _switchTab,
-              onClose: _closeTab,
-              onAdd: () => _addTab(activate: true),
-            ),
-            // Omnibox + nav buttons
-            Omnibox(
-              controller: _omniboxController,
-              canGoBack: active?.canGoBack ?? false,
-              canGoForward: active?.canGoForward ?? false,
-              isLoading: active?.isLoading ?? false,
-              progress: active?.progress ?? 0,
-              isBookmarked: active != null &&
-                  active.url != 'about:blank' &&
-                  _bookmarkService.containsUrl(active.url),
-              onBack: () => active != null
-                  ? _engine.goBack(active.id)
-                  : null,
-              onForward: () => active != null
-                  ? _engine.goForward(active.id)
-                  : null,
-              onReload: () => active != null
-                  ? (active.isLoading
-                      ? _engine.stopLoading(active.id)
-                      : _engine.reload(active.id))
-                  : null,
-              onSubmit: _onOmniboxSubmit,
-              onToggleBookmark: _toggleBookmark,
-              onOpenSettings: _openSettings,
-              onOpenDownloads: _openDownloadsSheet,
-            ),
-            // Bookmark bar
-            if (_bookmarkService.barItems.isNotEmpty)
-              BookmarkBar(
-                bookmarks: _bookmarkService.barItems,
-                onTap: (b) {
-                  if (active != null) _loadInTab(active.id, b.url);
-                },
+            Material(
+              color: const Color(0xFF1A1A1A),
+              elevation: 4,
+              shadowColor: Colors.black54,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TabStrip(
+                    tabs: _tabs,
+                    activeTabId: _activeTabId,
+                    onSelect: _switchTab,
+                    onClose: _closeTab,
+                    onAdd: () => _addTab(activate: true),
+                  ),
+                  Omnibox(
+                    controller: _omniboxController,
+                    canGoBack: active?.canGoBack ?? false,
+                    canGoForward: active?.canGoForward ?? false,
+                    isLoading: active?.isLoading ?? false,
+                    progress: active?.progress ?? 0,
+                    isBookmarked: active != null &&
+                        active.url != 'about:blank' &&
+                        _bookmarkService.containsUrl(active.url),
+                    onBack: () =>
+                        active != null ? _engine.goBack(active.id) : null,
+                    onForward: () =>
+                        active != null ? _engine.goForward(active.id) : null,
+                    onReload: () => active != null
+                        ? (active.isLoading
+                            ? _engine.stopLoading(active.id)
+                            : _engine.reload(active.id))
+                        : null,
+                    onSubmit: _onOmniboxSubmit,
+                    onToggleBookmark: _toggleBookmark,
+                    onOpenSettings: _openSettings,
+                    onOpenDownloads: _openDownloadsSheet,
+                  ),
+                  if (_bookmarkService.barItems.isNotEmpty)
+                    BookmarkBar(
+                      bookmarks: _bookmarkService.barItems,
+                      onTap: (b) {
+                        if (active != null) _loadInTab(active.id, b.url);
+                      },
+                    ),
+                ],
               ),
-            // Web content
+            ),
+            // Chỉ mount WebView của tab active — tránh nhiều PlatformView
+            // cùng tranh gesture (IndexedStack giữ tất cả WebView sống).
             Expanded(
-              child: _tabs.isEmpty
+              child: active == null
                   ? const SizedBox.shrink()
-                  : IndexedStack(
-                      index: _tabs
-                          .indexWhere((t) => t.id == _activeTabId)
-                          .clamp(0, _tabs.length - 1),
-                      children: _tabs.map((tab) {
-                        return _engine.buildView(
-                          tabId: tab.id,
-                          onCreated: () {},
-                        );
-                      }).toList(),
+                  : KeyedSubtree(
+                      key: ValueKey('active_web_${active.id}'),
+                      child: _engine.buildView(
+                        tabId: active.id,
+                        onCreated: () {},
+                      ),
                     ),
             ),
           ],

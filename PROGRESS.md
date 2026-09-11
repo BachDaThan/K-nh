@@ -51,7 +51,19 @@
 - Tên hiển thị: **Kính**
 - Package Android: `com.bachdathan.kinh`
 - Repo: `BachDaThan/K-nh`
-- Version hiện tại: `0.2.1+3`
+- Version hiện tại: `0.2.2+4`
+
+### Fix Omnibox không bấm được (0.2.2)
+- **Nguyên nhân:** Android PlatformView (WebView) mặc định Texture Layer Hybrid
+  Composition có thể cướp gesture; `IndexedStack` mount nhiều WebView cùng lúc
+  làm nặng thêm vấn đề hit-test. Kết quả: TabStrip nút + vẫn bấm được ở một số
+  vùng, nhưng Omnibox/TextField không nhận tap/keyboard.
+- **Cách sửa:**
+  1. Bật `displayWithHybridComposition: true` qua `AndroidWebViewWidgetCreationParams`
+  2. Chỉ mount **một** WebView của tab active (không IndexedStack nhiều PlatformView)
+  3. Bọc chrome (TabStrip + Omnibox + BookmarkBar) trong `Material(elevation: 4)`
+- File: `chromium_browser_engine.dart`, `browser_screen.dart`, `pubspec.yaml`
+
 
 ### Nhân trình duyệt (quan trọng)
 
