@@ -69,13 +69,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
             _omniboxController.text = u == 'about:blank' ? '' : u;
           }
         });
-        // Đánh dấu đã rời trang chủ tab nếu URL khác root
-        final root = _tabRootUrl[tabId];
-        if (root != null && u.isNotEmpty && u != 'about:blank') {
-          if (!_sameSite(root, u)) {
-            _tabLeftRoot[tabId] = true;
-          }
-        }
+        // Không đánh dấu leftRoot ở đây — redirect Google/consent làm false positive.
+        // Chỉ Omnibox / Bookmark mới coi là user chủ động đi trang khác.
       }
     };
     _engine.onProgressChanged = (tabId, progress) {
@@ -353,31 +348,34 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   /// Back hệ thống:
-  /// - Đang ở trang chủ tab (chưa đi đâu) → về Dashboard ngay
-  /// - Còn lịch sử WebView → lùi trang
-  /// - Hết lịch sử → về Dashboard
+  /// - Chưa gõ URL / bookmark (còn session trang chủ) → về Dashboard ngay
+  ///   (tránh kẹt redirect Google / consent)
+  /// - Đã chủ động đi trang khác + còn history → lùi WebView
+  /// - Hết history → về Dashboard
   Future<void> _handleSystemBack() async {
     final tab = _activeTab;
     if (tab == null) {
-      if (mounted) Navigator.of(context).maybePop();
+      if (mounted) Navigator.of(context).pop();
       return;
     }
 
     final leftRoot = _tabLeftRoot[tab.id] == true;
-    final canBack = await _engine.canGoBack(tab.id);
 
-    // Chưa từng rời trang chủ tab → Back = thoát Browser (không kẹt redirect Google)
+    // Chưa từng chủ động điều hướng → thoát Browser luôn
     if (!leftRoot) {
-      if (mounted) Navigator.of(context).maybePop();
+      if (mounted) Navigator.of(context).pop();
       return;
     }
 
-    if (canBack) {
-      await _engine.goBack(tab.id);
-      return;
-    }
+    try {
+      final canBack = await _engine.canGoBack(tab.id);
+      if (canBack) {
+        await _engine.goBack(tab.id);
+        return;
+      }
+    } catch (_) {}
 
-    if (mounted) Navigator.of(context).maybePop();
+    if (mounted) Navigator.of(context).pop();
   }
 
   @override
@@ -447,7 +445,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     BookmarkBar(
                       bookmarks: _bookmarkService.barItems,
                       onTap: (b) {
-                        if (active != null) _loadInTab(active.id, b.url);
+                        if (active != null) {
+                          _tabLeftRoot[active.id] = true;
+                          _loadInTab(active.id, b.url);
+                        }
                       },
                     ),
                 ],
