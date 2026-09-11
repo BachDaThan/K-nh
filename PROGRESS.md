@@ -24,7 +24,7 @@
     evaluateJavascript, user-agent...
   - **Implementation hiện tại:** `ChromiumBrowserEngine`
     (Android = System WebView / Chromium, Windows = WebView2)
-    qua package `flutter_inappwebview`.
+    qua package `webview_flutter + webview_win_floating`.
   - **Kiến trúc đã chuẩn bị sẵn** để sau này thêm `GeckoBrowserEngine`
     mà không phải sửa lại tầng UI / Omnibox / Tab / Bookmark / DoH...
 - [x] Trình duyệt chuẩn:
@@ -51,7 +51,7 @@
 - Tên hiển thị: **Kính**
 - Package Android: `com.bachdathan.kinh`
 - Repo: `BachDaThan/K-nh`
-- Version hiện tại: `0.2.0+2`
+- Version hiện tại: `0.2.1+3`
 
 ### Nhân trình duyệt (quan trọng)
 

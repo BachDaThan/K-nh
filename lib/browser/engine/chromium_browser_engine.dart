@@ -1,19 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
 import 'browser_engine.dart';
 
 /// Implementation dùng System WebView (Chromium) trên Android
-/// và WebView2 trên Windows thông qua flutter_inappwebview.
+/// và WebView2 trên Windows (qua webview_flutter + webview_win_floating).
 ///
-/// Đây là engine tạm thời cho Bước 2.
-/// Khi GeckoView plugin chín, tạo GeckoBrowserEngine implement cùng
-/// [BrowserEngine] và thay thế ở factory — không cần sửa UI/tính năng.
+/// Thay thế flutter_inappwebview vì package đó lỗi build trên
+/// Flutter 3.47 + AGP mới (proguard) và MSVC mới (experimental coroutine).
 class ChromiumBrowserEngine implements BrowserEngine {
-  final Map<String, InAppWebViewController> _controllers = {};
+  final Map<String, WebViewController> _controllers = {};
   final Map<String, double> _zoomLevels = {};
+  static bool _platformRegistered = false;
 
-  /// Callbacks để UI cập nhật state tab (title, url, progress...).
   void Function(String tabId, String? title)? onTitleChanged;
   void Function(String tabId, String? url)? onUrlChanged;
   void Function(String tabId, double progress)? onProgressChanged;
@@ -21,80 +21,86 @@ class ChromiumBrowserEngine implements BrowserEngine {
   void Function(String tabId, bool canBack, bool canForward)? onNavStateChanged;
   void Function(String tabId, String url, String fileName)? onDownloadStart;
 
+  void _ensurePlatform() {
+    if (_platformRegistered) return;
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
+      try {
+        // ignore: depend_on_referenced_packages
+        // Đăng ký Windows WebView2 — import động qua conditional không ổn định
+        // trên mọi SDK; webview_win_floating tự register qua pubspec plugin.
+      } catch (_) {}
+    }
+    _platformRegistered = true;
+  }
+
+  WebViewController _createController(String tabId) {
+    _ensurePlatform();
+    final controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0xFF121212))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (url) {
+            onLoadingChanged?.call(tabId, true);
+            onUrlChanged?.call(tabId, url);
+            onProgressChanged?.call(tabId, 0.1);
+          },
+          onProgress: (progress) {
+            onProgressChanged?.call(tabId, progress / 100.0);
+          },
+          onPageFinished: (url) async {
+            onLoadingChanged?.call(tabId, false);
+            onUrlChanged?.call(tabId, url);
+            onProgressChanged?.call(tabId, 1.0);
+            final c = _controllers[tabId];
+            if (c != null) {
+              final title = await c.getTitle();
+              onTitleChanged?.call(tabId, title);
+              final back = await c.canGoBack();
+              final forward = await c.canGoForward();
+              onNavStateChanged?.call(tabId, back, forward);
+            }
+          },
+          onWebResourceError: (error) {
+            onLoadingChanged?.call(tabId, false);
+          },
+          onNavigationRequest: (request) {
+            return NavigationDecision.navigate;
+          },
+        ),
+      );
+
+    _controllers[tabId] = controller;
+    _zoomLevels[tabId] = 1.0;
+    return controller;
+  }
+
   @override
   Widget buildView({
     required String tabId,
     required VoidCallback onCreated,
   }) {
-    return InAppWebView(
+    final existing = _controllers[tabId];
+    final controller = existing ?? _createController(tabId);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => onCreated());
+
+    return WebViewWidget(
       key: ValueKey('webview_$tabId'),
-      initialUrlRequest: URLRequest(url: WebUri('about:blank')),
-      initialSettings: InAppWebViewSettings(
-        javaScriptEnabled: true,
-        useShouldOverrideUrlLoading: true,
-        mediaPlaybackRequiresUserGesture: false,
-        allowsInlineMediaPlayback: true,
-        iframeAllowFullscreen: true,
-        supportZoom: true,
-        builtInZoomControls: true,
-        displayZoomControls: false,
-        useOnDownloadStart: true,
-        isInspectable: kDebugMode,
-        userAgent: null, // dùng default của engine → có thể inspect để xác minh
-      ),
-      onWebViewCreated: (controller) {
-        _controllers[tabId] = controller;
-        _zoomLevels[tabId] = 1.0;
-        onCreated();
-      },
-      onLoadStart: (controller, url) {
-        onLoadingChanged?.call(tabId, true);
-        onUrlChanged?.call(tabId, url?.toString());
-        _emitNavState(tabId, controller);
-      },
-      onLoadStop: (controller, url) async {
-        onLoadingChanged?.call(tabId, false);
-        onUrlChanged?.call(tabId, url?.toString());
-        final title = await controller.getTitle();
-        onTitleChanged?.call(tabId, title);
-        _emitNavState(tabId, controller);
-      },
-      onProgressChanged: (controller, progress) {
-        onProgressChanged?.call(tabId, progress / 100.0);
-      },
-      onTitleChanged: (controller, title) {
-        onTitleChanged?.call(tabId, title);
-      },
-      onDownloadStartRequest: (controller, request) {
-        final url = request.url.toString();
-        final fileName = request.suggestedFilename ??
-            url.split('/').last.split('?').first;
-        onDownloadStart?.call(tabId, url, fileName);
-      },
-      shouldOverrideUrlLoading: (controller, action) async {
-        // Cho phép điều hướng bình thường; sau này có thể chặn theo DoH/ad-block.
-        return NavigationActionPolicy.ALLOW;
-      },
+      controller: controller,
     );
   }
 
-  Future<void> _emitNavState(String tabId, InAppWebViewController c) async {
-    final back = await c.canGoBack();
-    final forward = await c.canGoForward();
-    onNavStateChanged?.call(tabId, back, forward);
-  }
-
-  InAppWebViewController? _c(String tabId) => _controllers[tabId];
+  WebViewController? _c(String tabId) => _controllers[tabId];
 
   @override
   Future<void> loadUrl(String tabId, String urlOrQuery) async {
-    final c = _c(tabId);
-    if (c == null) return;
+    var c = _c(tabId);
+    c ??= _createController(tabId);
 
     String target = urlOrQuery.trim();
     if (target.isEmpty) return;
 
-    // Nếu không phải URL rõ ràng → coi là tìm kiếm Google.
     final looksLikeUrl = target.contains('://') ||
         (target.contains('.') && !target.contains(' '));
     if (!looksLikeUrl) {
@@ -104,7 +110,7 @@ class ChromiumBrowserEngine implements BrowserEngine {
       target = 'https://$target';
     }
 
-    await c.loadUrl(urlRequest: URLRequest(url: WebUri(target)));
+    await c.loadRequest(Uri.parse(target));
   }
 
   @override
@@ -126,7 +132,9 @@ class ChromiumBrowserEngine implements BrowserEngine {
 
   @override
   Future<void> stopLoading(String tabId) async {
-    await _c(tabId)?.stopLoading();
+    try {
+      await _c(tabId)?.runJavaScript('window.stop();');
+    } catch (_) {}
   }
 
   @override
@@ -145,8 +153,9 @@ class ChromiumBrowserEngine implements BrowserEngine {
     if (c == null) return;
     final clamped = factor.clamp(0.25, 5.0);
     _zoomLevels[tabId] = clamped;
-    // InAppWebView dùng zoomBy relative; đặt về 1 rồi zoomBy.
-    await c.zoomBy(zoomFactor: clamped);
+    try {
+      await c.runJavaScript('document.body.style.zoom = "$clamped";');
+    } catch (_) {}
   }
 
   @override
@@ -156,8 +165,7 @@ class ChromiumBrowserEngine implements BrowserEngine {
 
   @override
   Future<String?> getCurrentUrl(String tabId) async {
-    final uri = await _c(tabId)?.getUrl();
-    return uri?.toString();
+    return await _c(tabId)?.currentUrl();
   }
 
   @override
@@ -167,37 +175,46 @@ class ChromiumBrowserEngine implements BrowserEngine {
 
   @override
   Future<dynamic> evaluateJavascript(String tabId, String source) async {
-    return await _c(tabId)?.evaluateJavascript(source: source);
+    try {
+      return await _c(tabId)?.runJavaScriptReturningResult(source);
+    } catch (_) {
+      await _c(tabId)?.runJavaScript(source);
+      return null;
+    }
   }
 
   @override
   Future<void> clearCookies() async {
-    await CookieManager.instance().deleteAllCookies();
+    final cookieManager = WebViewCookieManager();
+    await cookieManager.clearCookies();
   }
 
   @override
   Future<void> clearCache() async {
-    // Xóa cache của tất cả controller đang mở.
     for (final c in _controllers.values) {
-      await c.clearCache();
+      try {
+        await c.clearCache();
+        await c.clearLocalStorage();
+      } catch (_) {}
     }
   }
 
   @override
   Future<void> printToPdf(String tabId) async {
-    final c = _c(tabId);
-    if (c == null) return;
-    // InAppWebView hỗ trợ print trên một số platform.
     try {
-      await c.printCurrentPage();
-    } catch (_) {
-      // Fallback: không hỗ trợ trên platform này.
-    }
+      await _c(tabId)?.runJavaScript('window.print();');
+    } catch (_) {}
   }
 
   @override
   Future<String?> getUserAgent(String tabId) async {
-    return await _c(tabId)?.getSettings().then((s) => s?.userAgent);
+    try {
+      final result = await _c(tabId)
+          ?.runJavaScriptReturningResult('navigator.userAgent');
+      return result?.toString();
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
