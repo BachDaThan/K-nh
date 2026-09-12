@@ -13,7 +13,7 @@ class UpdateInfo {
   final String releaseNotesUrl; // link trang Release trên GitHub
   final String apkDownloadUrl; // link tải trực tiếp Kinh.apk
   final String exeDownloadUrl; // link tải trực tiếp Kinh-Windows.zip
-  final String? body; // ghi chú release (nếu có)
+  final String? body; // changelog (nếu có)
 
   UpdateInfo({
     required this.latestVersion,
@@ -45,7 +45,14 @@ class UpdateInfo {
   }
 }
 
-/// Kiểm tra & thông báo bản cập nhật mới từ GitHub Releases (tag "latest").
+/// Kiểm tra & thông báo bản cập nhật mới qua file `version.json` tĩnh trong
+/// repo, đọc qua jsDelivr CDN (KHÔNG gọi GitHub REST API — tránh giới hạn
+/// 60 request/giờ của api.github.com; jsDelivr không giới hạn request và
+/// miễn phí hoàn toàn, không cần thêm dịch vụ nào).
+///
+/// Lưu ý: jsDelivr cache nội dung theo CDN, nên sau khi push version.json
+/// mới có thể mất vài phút tới vài giờ để phản ánh — đây là đánh đổi chấp
+/// nhận được cho một app cá nhân, không cần tức thời.
 ///
 /// Nguyên tắc (đã thống nhất trong hồ sơ thiết kế gốc):
 /// - KHÔNG silent-install — chỉ thông báo + link tải, người dùng tự bấm cài.
@@ -53,8 +60,10 @@ class UpdateInfo {
 /// - Không check quá thường xuyên — mặc định tối đa 1 lần / 6 giờ, trừ khi
 ///   người dùng chủ động bấm "Kiểm tra ngay" trong Settings.
 class UpdateService {
-  static const _repoApi =
-      'https://api.github.com/repos/BachDaThan/K-nh/releases/tags/latest';
+  static const _versionJsonUrl =
+      'https://cdn.jsdelivr.net/gh/BachDaThan/K-nh@main/version.json';
+  static const _releasesPageUrl =
+      'https://github.com/BachDaThan/K-nh/releases';
   static const _keyLastCheck = 'kinh_update_last_check_ms';
   static const _minCheckIntervalMs = 6 * 60 * 60 * 1000; // 6 giờ
 
@@ -74,30 +83,22 @@ class UpdateService {
     }
 
     try {
+      // Query string chống cache CDN quá lâu khi force-check.
+      final url = force
+          ? '$_versionJsonUrl?_=${DateTime.now().millisecondsSinceEpoch}'
+          : _versionJsonUrl;
+
       final res = await http
-          .get(
-            Uri.parse(_repoApi),
-            headers: {'Accept': 'application/vnd.github+json'},
-          )
+          .get(Uri.parse(url))
           .timeout(const Duration(seconds: 10));
 
       if (res.statusCode != 200) return null;
 
       final json = jsonDecode(res.body) as Map<String, dynamic>;
-      final tagName = (json['name'] as String?) ?? '';
-      // name dạng "Kính — bản mới nhất (v0.5.0)" → tách số version trong ()
-      final match = RegExp(r'v?(\d+\.\d+\.\d+)').firstMatch(tagName);
-      final latestVersion = match?.group(1) ?? '0.0.0';
-
-      final assets = (json['assets'] as List<dynamic>? ?? []);
-      String apkUrl = '';
-      String exeUrl = '';
-      for (final a in assets) {
-        final name = (a['name'] as String?) ?? '';
-        final url = (a['browser_download_url'] as String?) ?? '';
-        if (name == 'Kinh.apk') apkUrl = url;
-        if (name == 'Kinh-Windows.zip') exeUrl = url;
-      }
+      final latestVersion = (json['version'] as String?) ?? '0.0.0';
+      final apkUrl = (json['apk_url'] as String?) ?? '';
+      final exeUrl = (json['exe_url'] as String?) ?? '';
+      final changelog = json['changelog'] as String?;
 
       final info = await PackageInfo.fromPlatform();
       final currentVersion = info.version;
@@ -109,11 +110,10 @@ class UpdateService {
       return UpdateInfo(
         latestVersion: latestVersion,
         currentVersion: currentVersion,
-        releaseNotesUrl: (json['html_url'] as String?) ??
-            'https://github.com/BachDaThan/K-nh/releases',
+        releaseNotesUrl: _releasesPageUrl,
         apkDownloadUrl: apkUrl,
         exeDownloadUrl: exeUrl,
-        body: json['body'] as String?,
+        body: changelog,
       );
     } catch (_) {
       // Lỗi mạng/parse — im lặng bỏ qua, không làm phiền người dùng.

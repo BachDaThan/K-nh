@@ -1,0 +1,6 @@
+{
+  "version": "0.5.0",
+  "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
+  "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
+  "changelog": "Fix Pyodide (loadPyodide origin null) + Search Diversity (site: cú pháp đúng) + Binary OTA Update"
+}

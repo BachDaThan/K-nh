@@ -3,7 +3,7 @@
 ## Trạng thái hiện tại: Bước 5/6 (một phần) — Binary OTA Update ✅
 
 ### Bước 5 — Đã làm (Binary Update, chưa làm Hot Update HTML/JS)
-- [x] **UpdateService** (`lib/update/services/update_service.dart`): check bản mới qua GitHub Releases API (tag `latest`)
+- [x] **UpdateService** (`lib/update/services/update_service.dart`): check bản mới qua `version.json` tĩnh trong repo, đọc qua jsDelivr CDN (đổi từ GitHub API ban đầu, theo tư vấn Gemini — tránh giới hạn 60 request/giờ của api.github.com; jsDelivr không giới hạn, tự động cache CDN)
   - Chỉ check khi có Wi-Fi (hoãn nếu dùng data di động 3G/4G)
   - Giới hạn tối đa 1 lần / 6 giờ (trừ khi force check)
   - So sánh semver, không silent — chỉ trả về info nếu có bản mới hơn
@@ -48,7 +48,9 @@
 - API key không bao giờ gửi server Kính (không có server).
 
 ### Ghi chú Bước 5 (Binary Update)
-- Dùng GitHub Releases API công khai (`api.github.com/repos/.../releases/tags/latest`), không cần token, không cần server riêng — đúng triết lý "0 đồng".
+- Đọc `version.json` tĩnh ở gốc repo qua jsDelivr CDN (`cdn.jsdelivr.net/gh/BachDaThan/K-nh@main/version.json`) — không gọi GitHub REST API, không giới hạn request, không cần token, không cần server riêng — đúng triết lý "0 đồng".
+- `version.json` được GitHub Actions tự động cập nhật sau mỗi lần build/release thành công (commit `[skip ci]` để tránh vòng lặp build) — không cần sửa tay.
+- jsDelivr cache theo CDN — sau khi push có thể mất vài phút tới vài giờ để phản ánh, chấp nhận được cho app cá nhân.
 - Link tải mở qua trình duyệt ngoài (`url_launcher`), Android tự xử lý tải + hỏi cài — app KHÔNG tự cài ngầm (không cần quyền `REQUEST_INSTALL_PACKAGES`).
 - Vì tất cả bản build từ giờ đều ký cùng 1 keystore thật, người dùng có thể cài đè bản mới lên bản cũ mà không mất dữ liệu (khác với lần chuyển từ debug key sang release key trước đây, lần đó bắt buộc phải gỡ cài lại).
 
