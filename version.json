@@ -2,5 +2,5 @@
   "version": "0.6.0",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bước 6 App Launcher + Bước 5 Hot Update/OTA — version.json sync fix"
+  "changelog": "Bản build tự động từ commit e243123 (v0.6.0)"
 }
