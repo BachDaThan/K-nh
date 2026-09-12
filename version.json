@@ -2,5 +2,5 @@
   "version": "0.7.1",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Polish Theme/Sidebar + ký APK thống nhất (cài đè không gỡ app) + Browser theo Theme"
+  "changelog": "Bản build tự động từ commit 0677187 (v0.7.1)"
 }
