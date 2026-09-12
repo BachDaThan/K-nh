@@ -81,8 +81,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${KEYSTORE_BASE64:-}" ] || [ -z "${KEYSTORE_PASSWORD:-}" ] || [ -z "${KEYSTORE_ALIAS:-}" ]; then
-            echo "::warning::Thiếu KEYSTORE_* secrets. APK ký bằng key mặc định — KHÔNG cài đè được lên bản đã ký key khác (phải gỡ app cũ)."
-            exit 0
+            echo "::error::Thiếu KEYSTORE_* secrets (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEYSTORE_ALIAS)."
+            echo "Không build APK không ký thống nhất — sẽ không cài đè được bản cũ."
+            echo "Thêm secrets theo SIGNING.md rồi chạy lại workflow."
+            exit 1
           fi
           KEY_PASS="${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
           mkdir -p android/app
@@ -100,6 +102,17 @@ jobs:
 
       - name: Build APK (release)
         run: flutter build apk --release
+
+      - name: In chữ ký APK (để kiểm tra cài đè)
+        run: |
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          if command -v apksigner >/dev/null 2>&1; then
+            apksigner verify --print-certs "$APK" || true
+          else
+            # jarsigner / keytool fallback
+            unzip -p "$APK" META-INF/*.RSA 2>/dev/null | openssl pkcs7 -inform DER -print_certs -nout 2>/dev/null | head -20 || true
+            echo "APK built: $APK"
+          fi
 
       - name: Đổi tên APK cho dễ nhận diện
         run: cp build/app/outputs/flutter-apk/app-release.apk Kinh.apk

@@ -142,24 +142,43 @@ class _BentoCardState extends State<BentoCard>
                                     size: 22,
                                   ),
                           ),
-                          Text(
-                            item.title,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.2,
-                              shadows: isDark
-                                  ? [
-                                      Shadow(
-                                        color: accent.withOpacity(0.4),
-                                        blurRadius: 8,
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.title,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                  shadows: isDark
+                                      ? [
+                                          Shadow(
+                                            color: accent.withOpacity(0.4),
+                                            blurRadius: 8,
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (item.subtitle != null &&
+                                  item.subtitle!.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  item.subtitle!,
+                                  style: TextStyle(
+                                    color: textColor.withOpacity(0.72),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
                           ),
                         ],
                       ),

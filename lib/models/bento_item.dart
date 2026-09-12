@@ -1,33 +1,49 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
-/// Kích thước một ô trong lưới Bento Grid, tính theo số cột/hàng chiếm dụng.
-enum BentoSize {
-  small, // 1x1
-  wide, // 2x1
-  tall, // 1x2
-  large, // 2x2
-}
+enum BentoSize { small, wide, tall, large }
 
-/// Đại diện cho một ô (widget hoặc lối tắt app) trên Dashboard.
 class BentoItem {
   final String id;
   final String title;
+  final String? subtitle; // live text trên thẻ
   final IconData? icon;
-  final Uint8List? iconBytes; // icon app thật (ưu tiên hơn `icon` nếu có)
+  final Uint8List? iconBytes;
   final BentoSize size;
   final Color? accentColor;
-  final String? packageName; // khác null nếu đây là lối tắt app đã ghim
+  final String? packageName;
 
   const BentoItem({
     required this.id,
     required this.title,
+    this.subtitle,
     this.icon,
     this.iconBytes,
     this.size = BentoSize.small,
     this.accentColor,
     this.packageName,
   });
+
+  BentoItem copyWith({
+    String? title,
+    String? subtitle,
+    IconData? icon,
+    Uint8List? iconBytes,
+    BentoSize? size,
+    Color? accentColor,
+    String? packageName,
+  }) {
+    return BentoItem(
+      id: id,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      icon: icon ?? this.icon,
+      iconBytes: iconBytes ?? this.iconBytes,
+      size: size ?? this.size,
+      accentColor: accentColor ?? this.accentColor,
+      packageName: packageName ?? this.packageName,
+    );
+  }
 
   int get crossAxisCellCount {
     switch (size) {

@@ -12,6 +12,8 @@ import '../launcher/widgets/app_picker_sheet.dart';
 import '../widgets/app_sidebar.dart';
 import '../theme/theme_settings_sheet.dart';
 import '../theme/theme_service.dart' show themeController;
+import '../live/weather_service.dart';
+import '../live/network_status_service.dart';
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
 class DashboardScreen extends StatefulWidget {
@@ -27,6 +29,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _appLauncherService = AppLauncherService();
   String? _dashboardNotice;
   List<BentoItem> _pinnedAppItems = [];
+  final _weatherService = WeatherService();
+  final _networkService = NetworkStatusService();
+  String? _weatherSub;
+  String? _networkSub;
 
   @override
   void initState() {
@@ -36,6 +42,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUpdate();
       _checkHotPatch();
+      _refreshLiveCards();
+    });
+    _networkService.onChange.listen((_) {
+      if (mounted) _refreshLiveCards();
     });
   }
 
@@ -160,6 +170,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ];
 
   void _onItemTap(BuildContext context, BentoItem item) {
+    if (item.id == 'weather' || item.id == 'wifi') {
+      _refreshLiveCards();
+      return;
+    }
     if (item.id == 'search') {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const BrowserScreen()),
@@ -192,7 +206,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<void> _refreshLiveCards() async {
+    final w = await _weatherService.fetch();
+    final n = await _networkService.fetch();
+    if (!mounted) return;
+    setState(() {
+      if (w != null) {
+        _weatherSub = '${w.headline}\n${w.place}';
+      }
+      _networkSub = n.headline;
+    });
+  }
+
   void _openThemeSettings() {
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -356,8 +383,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _items.where((i) => i.id != 'add_app').toList();
                     final addAppItem =
                         _items.firstWhere((i) => i.id == 'add_app');
+                    final liveFixed = fixedItems.map((e) {
+                      if (e.id == 'weather') {
+                        return e.copyWith(
+                          subtitle: _weatherSub ?? 'Đang tải…',
+                        );
+                      }
+                      if (e.id == 'wifi') {
+                        return e.copyWith(
+                          subtitle: _networkSub ?? 'Đang tải…',
+                        );
+                      }
+                      return e;
+                    }).toList();
                     final displayItems = [
-                      ...fixedItems,
+                      ...liveFixed,
                       ..._pinnedAppItems,
                       addAppItem,
                     ];
