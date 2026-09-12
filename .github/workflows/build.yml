@@ -126,7 +126,11 @@ jobs:
     needs: [ build-android, build-windows ]
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth 0 + token: đủ để pull/push main an toàn
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Tải lại APK
         uses: actions/download-artifact@v4
@@ -143,8 +147,10 @@ jobs:
       - name: Đọc số phiên bản từ pubspec.yaml
         id: ver
         run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
+          VERSION=$(grep '^version:' pubspec.yaml | head -1 | sed 's/version:[[:space:]]*//' | sed 's/+.*//' | tr -d '\r')
+          echo "version=$VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          test -n "$VERSION"
 
       - name: Tạo/Cập nhật Release "latest"
         uses: softprops/action-gh-release@v2
@@ -161,3 +167,54 @@ jobs:
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Fix OTA: ghi version.json bằng Python (không heredoc YAML) ---
+      # Kéo main mới nhất trước khi commit (tránh race khi nhiều push liên tiếp)
+      - name: Tự động cập nhật version.json
+        env:
+          VER: ${{ steps.ver.outputs.version }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "Updating version.json -> $VER (sha=$SHA)"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Đồng bộ main mới nhất (tránh push đè commit mới hơn)
+          git fetch origin main
+          git checkout -B main origin/main
+
+          python3 - <<'PY'
+          import json, os
+          ver = os.environ["VER"].strip()
+          sha = os.environ["SHA"].strip()
+          data = {
+              "version": ver,
+              "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
+              "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
+              "changelog": f"Bản build tự động từ commit {sha[:7]} (v{ver})",
+          }
+          with open("version.json", "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+          print("Wrote version.json:")
+          print(json.dumps(data, ensure_ascii=False, indent=2))
+          PY
+
+          git add version.json
+          if git diff --cached --quiet; then
+            echo "version.json không đổi (đã đúng $VER) — bỏ qua commit"
+          else
+            git commit -m "chore: bump version.json to v${VER} [skip ci]"
+            # Retry push nếu race
+            for i in 1 2 3; do
+              if git push origin main; then
+                echo "Pushed version.json OK"
+                break
+              fi
+              echo "Push conflict, rebase và thử lại ($i)..."
+              git pull --rebase origin main
+              sleep 2
+            done
+          fi

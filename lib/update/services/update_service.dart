@@ -60,7 +60,10 @@ class UpdateInfo {
 /// - Không check quá thường xuyên — mặc định tối đa 1 lần / 6 giờ, trừ khi
 ///   người dùng chủ động bấm "Kiểm tra ngay" trong Settings.
 class UpdateService {
-  static const _versionJsonUrl =
+  /// Ưu tiên raw.githubusercontent (ít cache hơn jsDelivr).
+  static const _versionJsonUrlRaw =
+      'https://raw.githubusercontent.com/BachDaThan/K-nh/main/version.json';
+  static const _versionJsonUrlCdn =
       'https://cdn.jsdelivr.net/gh/BachDaThan/K-nh@main/version.json';
   static const _releasesPageUrl =
       'https://github.com/BachDaThan/K-nh/releases';
@@ -83,18 +86,33 @@ class UpdateService {
     }
 
     try {
-      // Cache buster: khi force-check (người dùng chủ động bấm "Kiểm tra
-      // ngay"), thêm timestamp vào URL để jsDelivr trả dữ liệu mới nhất
-      // 100%, bỏ qua cache CDN (có thể lag vài phút-giờ so với GitHub thật).
-      final url = force
-          ? '$_versionJsonUrl?t=${DateTime.now().millisecondsSinceEpoch}'
-          : _versionJsonUrl;
+      // Ưu tiên raw GitHub (cache-buster khi force); fallback jsDelivr.
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final urls = force
+          ? [
+              '$_versionJsonUrlRaw?t=$ts',
+              '$_versionJsonUrlCdn?t=$ts',
+            ]
+          : [
+              _versionJsonUrlRaw,
+              _versionJsonUrlCdn,
+            ];
 
-      final res = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 10));
-
-      if (res.statusCode != 200) return null;
+      http.Response? res;
+      for (final url in urls) {
+        try {
+          final r = await http
+              .get(Uri.parse(url))
+              .timeout(const Duration(seconds: 10));
+          if (r.statusCode == 200) {
+            res = r;
+            break;
+          }
+        } catch (_) {
+          // thử URL tiếp theo
+        }
+      }
+      if (res == null) return null;
 
       final json = jsonDecode(res.body) as Map<String, dynamic>;
       final latestVersion = (json['version'] as String?) ?? '0.0.0';

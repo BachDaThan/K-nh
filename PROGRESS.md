@@ -72,3 +72,14 @@
 - Link tải mở qua trình duyệt ngoài (`url_launcher`), Android tự xử lý tải + hỏi cài — app KHÔNG tự cài ngầm (không cần quyền `REQUEST_INSTALL_PACKAGES`).
 - Vì tất cả bản build từ giờ đều ký cùng 1 keystore thật, người dùng có thể cài đè bản mới lên bản cũ mà không mất dữ liệu (khác với lần chuyển từ debug key sang release key trước đây, lần đó bắt buộc phải gỡ cài lại).
 
+
+### Fix OTA version.json (2026-09-12)
+- **Triệu chứng:** Nút "Kiểm tra cập nhật" luôn báo "đang dùng bản mới nhất" dù đã push code mới.
+- **Nguyên nhân thật:**
+  1. `version.json` trên repo kẹt `0.5.0` trong khi `pubspec.yaml` = `0.6.0`.
+  2. Workflow `build.yml` **không có** (hoặc step ghi file bị skip) bước cập nhật `version.json` sau release — CI ✓ xanh vì không lỗi, nhưng file không đổi.
+  3. App đọc `version.json` → so sánh semver → latest (0.5.0) không > current → "mới nhất".
+- **Cách sửa:**
+  1. Ghi `version.json` = `0.6.0` khớp pubspec.
+  2. Thêm step CI: Python ghi JSON sạch (không heredoc YAML), `git fetch` + checkout `origin/main` trước commit, push retry, message `[skip ci]`.
+  3. `UpdateService` ưu tiên `raw.githubusercontent.com` + fallback jsDelivr, cache-buster khi force.
