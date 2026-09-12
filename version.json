@@ -1,6 +1,6 @@
 {
-  "version": "0.6.0",
+  "version": "0.7.0",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit e243123 (v0.6.0)"
+  "changelog": "Bước 6 hoàn thiện: Sidebar lối tắt + Theme System (màu/nền/blur)"
 }

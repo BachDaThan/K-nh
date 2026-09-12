@@ -9,6 +9,9 @@ import '../update/services/hot_update_service.dart';
 import '../update/widgets/update_dialog.dart';
 import '../launcher/services/app_launcher_service.dart';
 import '../launcher/widgets/app_picker_sheet.dart';
+import '../widgets/app_sidebar.dart';
+import '../theme/theme_settings_sheet.dart';
+import '../theme/theme_service.dart' show themeController;
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
 class DashboardScreen extends StatefulWidget {
@@ -189,11 +192,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _openThemeSettings() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => ThemeSettingsSheet(controller: themeController),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+
+    final pins = _pinnedAppItems
+        .where((e) => e.packageName != null)
+        .map((e) => SidebarPin(
+              id: e.id,
+              label: e.title,
+              iconBytes: e.iconBytes,
+              packageName: e.packageName,
+            ))
+        .toList();
+
     return Scaffold(
       body: SafeArea(
-        child: LayoutBuilder(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppSidebar(
+              onHome: () {},
+              onBrowser: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const BrowserScreen()),
+                );
+              },
+              onAiBuilder: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AiBuilderScreen()),
+                );
+              },
+              onTheme: _openThemeSettings,
+              onCheckUpdate: () => _checkUpdate(force: true),
+              pins: pins,
+              onPinTap: (pin) async {
+                if (pin.packageName != null) {
+                  await _appLauncherService.openApp(pin.packageName!);
+                }
+              },
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(
+              child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 700;
             final crossAxisCount = isWide ? 4 : 2;
@@ -327,8 +379,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             );
           },
-        ),
-      ),
-    );
+              ), // LayoutBuilder
+            ), // Expanded
+          ], // Row
+        ), // SafeArea child Row
+      ), // SafeArea
+    ); // Scaffold
   }
 }
