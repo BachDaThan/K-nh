@@ -107,7 +107,7 @@ class _AiBuilderScreenState extends State<AiBuilderScreen> {
     _runner = c;
   }
 
-  static const _hotpatchRunnerHtmlKey = 'kinh_hotpatch_runner_html';
+  static const _hotpatchRunnerHtmlKey = '7c068a7c536061101a49f95af854a0ce9cc2dd6c79d25cec5884d01ea5388cab';
 
   /// Trả về HTML runner đã được Hot Update vá (nếu có, đã verify chữ ký
   /// Ed25519 từ trước khi lưu — xem HotUpdateService), ngược lại dùng

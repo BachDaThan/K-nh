@@ -34,12 +34,12 @@ class HotPatch {
 /// 4. Tự tay commit + push `hotpatch.json` lên repo.
 class HotUpdateService {
   static const _hotpatchUrl =
-      'https://cdn.jsdelivr.net/gh/BachDaThan/K-nh@main/hotpatch.json';
+      '7c068a7c536061101a49f95af854a0ce9cc2dd6c79d25cec5884d01ea5388cab';
 
   /// Public key Ed25519 nhúng cứng — an toàn khi công khai, dùng để verify
   /// chữ ký của mọi hot patch. Khớp với private key giữ riêng offline.
   static const _publicKeyBase64 =
-      'TN+MSZfj/fVPLjTreVckCDKoCxizIB4CWUcH59f1wcA=';
+      '7c068a7c536061101a49f95af854a0ce9cc2dd6c79d25cec5884d01ea5388cab';
 
   static const _keyAppliedVersion = 'kinh_hotpatch_applied_version';
 
