@@ -83,9 +83,11 @@ class UpdateService {
     }
 
     try {
-      // Query string chống cache CDN quá lâu khi force-check.
+      // Cache buster: khi force-check (người dùng chủ động bấm "Kiểm tra
+      // ngay"), thêm timestamp vào URL để jsDelivr trả dữ liệu mới nhất
+      // 100%, bỏ qua cache CDN (có thể lag vài phút-giờ so với GitHub thật).
       final url = force
-          ? '$_versionJsonUrl?_=${DateTime.now().millisecondsSinceEpoch}'
+          ? '$_versionJsonUrl?t=${DateTime.now().millisecondsSinceEpoch}'
           : _versionJsonUrl;
 
       final res = await http

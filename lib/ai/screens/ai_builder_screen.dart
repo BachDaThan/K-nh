@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/ai_settings_service.dart';
 import '../services/ai_chat_service.dart';
@@ -50,11 +51,11 @@ class _AiBuilderScreenState extends State<AiBuilderScreen> {
   Future<void> _init() async {
     await _settings.load();
     await _snippets.load();
-    _initRunner();
+    await _initRunner();
     if (mounted) setState(() => _ready = true);
   }
 
-  void _initRunner() {
+  Future<void> _initRunner() async {
     final c = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF0D0D0D))
@@ -101,8 +102,25 @@ class _AiBuilderScreenState extends State<AiBuilderScreen> {
 
     // baseUrl giúp trang có origin HTTPS hợp lệ thay vì null/about:blank —
     // cần thiết để fetch() tới CDN Pyodide không bị chặn bởi CORS/mixed-content.
-    c.loadHtmlString(_runnerHtml, baseUrl: 'https://kinh.local/');
+    final html = await _resolveRunnerHtml();
+    c.loadHtmlString(html, baseUrl: 'https://kinh.local/');
     _runner = c;
+  }
+
+  static const _hotpatchRunnerHtmlKey = 'kinh_hotpatch_runner_html';
+
+  /// Trả về HTML runner đã được Hot Update vá (nếu có, đã verify chữ ký
+  /// Ed25519 từ trước khi lưu — xem HotUpdateService), ngược lại dùng
+  /// bản mặc định nhúng cứng trong code.
+  Future<String> _resolveRunnerHtml() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      final patched = p.getString(_hotpatchRunnerHtmlKey);
+      if (patched != null && patched.trim().isNotEmpty) return patched;
+    } catch (_) {
+      // Lỗi đọc SharedPreferences — dùng bản mặc định an toàn.
+    }
+    return _runnerHtml;
   }
 
   /// Sandbox HTML: kết quả gửi về Flutter qua KinhRunner.postMessage

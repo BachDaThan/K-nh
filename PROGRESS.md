@@ -1,16 +1,24 @@
 # Tiến độ dự án Kính
 
-## Trạng thái hiện tại: Bước 5/6 (một phần) — Binary OTA Update ✅
+## Trạng thái hiện tại: Bước 5/6 — hoàn thành ✅ (Binary Update + Hot Update + Ed25519)
 
-### Bước 5 — Đã làm (Binary Update, chưa làm Hot Update HTML/JS)
+### Bước 5 — Hot Update + Ed25519 (mới)
+- [x] **HotUpdateService** (`lib/update/services/hot_update_service.dart`): tải `hotpatch.json` qua jsDelivr, verify chữ ký Ed25519 **bắt buộc** trước khi tin tưởng nội dung — không có chữ ký hoặc chữ ký sai → từ chối hoàn toàn, không áp dụng
+- [x] Public key Ed25519 nhúng cứng trong app (an toàn khi công khai); private key **KHÔNG BAO GIỜ** vào repo/CI — chỉ tồn tại offline trên máy người ký
+- [x] Ký bằng canonical string cố định (`patch_version=...\nrunner_html=...\ndashboard_notice=...`), KHÔNG dùng JSON string để verify (thứ tự key JSON sau decode không đảm bảo giống lúc ký → verify sẽ fail ngẫu nhiên nếu dùng JSON)
+- [x] `tool/sign_hotpatch.py`: script ký thủ công, chạy offline trên máy người dùng, KHÔNG chạy trong GitHub Actions
+- [x] Hot patch có thể vá: `runner_html` (trang chạy code trong AI Builder) và `dashboard_notice` (banner thông báo trên Dashboard) — không cần build lại APK/EXE, không cần cài lại
+- [x] Đã test full luồng ký → verify bằng Python (mô phỏng logic Dart): verify pass với payload đúng, verify fail khi nội dung bị giả mạo
+- [x] `hotpatch.json` placeholder (rỗng, đã ký hợp lệ) đặt sẵn ở gốc repo
+
+### Bước 5 — Binary Update (trước đó)
 - [x] **UpdateService** (`lib/update/services/update_service.dart`): check bản mới qua `version.json` tĩnh trong repo, đọc qua jsDelivr CDN (đổi từ GitHub API ban đầu, theo tư vấn Gemini — tránh giới hạn 60 request/giờ của api.github.com; jsDelivr không giới hạn, tự động cache CDN)
   - Chỉ check khi có Wi-Fi (hoãn nếu dùng data di động 3G/4G)
   - Giới hạn tối đa 1 lần / 6 giờ (trừ khi force check)
   - So sánh semver, không silent — chỉ trả về info nếu có bản mới hơn
 - [x] **UpdateDialog** (`lib/update/widgets/update_dialog.dart`): thông báo có bản mới, nút "Tải bản mới" mở trình duyệt tải APK/EXE, nút "Để sau" — KHÔNG tự cài ngầm
-- [x] Gắn vào `DashboardScreen` — check sau khi mở app (postFrameCallback, không chặn UI)
-- [ ] Hot Update (HTML/JS/Mini-App) — chưa làm, để sau nếu cần
-- [ ] Chữ ký Ed25519 cho gói update — CHƯA làm (hiện dựa vào HTTPS + GitHub Releases là đủ tin cậy cho Binary Update qua trình duyệt; Ed25519 sẽ cần thiết hơn nếu sau này làm Hot Update tự động áp dụng code mới mà không qua GitHub trực tiếp)
+- [x] Gắn vào `DashboardScreen` — check tự động sau khi mở app (postFrameCallback, im lặng nếu không có bản mới)
+- [x] Nút "Kiểm tra cập nhật" thủ công (icon trên header Dashboard) — bỏ qua giới hạn 6h, thêm cache-buster `?t=<timestamp>` vào URL `version.json` để lấy dữ liệu mới nhất từ jsDelivr ngay lập tức, có SnackBar báo "Đang dùng bản mới nhất" nếu không có gì mới
 
 ### Fix bảo mật (trước Bước 5)
 - [x] API key AI chuyển từ SharedPreferences (plaintext) sang `flutter_secure_storage` (Android KeyStore), có migration tự động cho key cũ
@@ -39,7 +47,7 @@
 - Version: `0.5.0+8`
 
 ### Tiếp theo
-- [ ] **Bước 5 (tiếp)** — Cloud Sync (Google Drive backup), Chia sẻ 1-Click (QR/Rentry/Gist), Hot Update HTML/JS có chữ ký Ed25519
+- [ ] **Bước 5 (còn lại)** — Cloud Sync (Google Drive backup), Chia sẻ 1-Click (QR/Rentry/Gist)
 - [ ] **Bước 6** — App Launcher, Sidebar, Theme
 
 ### Ghi chú Bước 4

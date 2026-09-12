@@ -4,6 +4,7 @@ import '../widgets/bento_card.dart';
 import '../browser/screens/browser_screen.dart';
 import '../ai/screens/ai_builder_screen.dart';
 import '../update/services/update_service.dart';
+import '../update/services/hot_update_service.dart';
 import '../update/widgets/update_dialog.dart';
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
@@ -16,18 +17,51 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _updateService = UpdateService();
+  final _hotUpdateService = HotUpdateService();
+  String? _dashboardNotice;
 
   @override
   void initState() {
     super.initState();
     // Check update sau khi frame đầu vẽ xong, không chặn UI khởi động.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkUpdate());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUpdate();
+      _checkHotPatch();
+    });
   }
 
-  Future<void> _checkUpdate() async {
-    final info = await _updateService.check();
+  Future<void> _checkUpdate({bool force = false}) async {
+    final info = await _updateService.check(force: force);
     if (!mounted) return;
-    await showUpdateDialogIfNeeded(context, info);
+    if (info != null && info.hasUpdate) {
+      await showUpdateDialogIfNeeded(context, info);
+    } else if (force) {
+      // Chỉ báo "đã mới nhất" khi người dùng chủ động bấm kiểm tra —
+      // check tự động lúc mở app thì im lặng nếu không có gì mới.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đang dùng bản mới nhất.'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _checkHotPatch() async {
+    // Chữ ký đã được HotUpdateService verify trước khi trả về patch —
+    // tới đây coi như nội dung đáng tin cậy.
+    final patch = await _hotUpdateService.fetchAndVerify();
+    if (!mounted || patch == null) return;
+    if (patch.dashboardNotice != null &&
+        patch.dashboardNotice!.trim().isNotEmpty) {
+      setState(() => _dashboardNotice = patch.dashboardNotice);
+    }
+    if (patch.runnerHtml != null && patch.runnerHtml!.trim().isNotEmpty) {
+      final p = await SharedPreferences.getInstance();
+      await p.setString('kinh_hotpatch_runner_html', patch.runnerHtml!);
+    }
+    await _hotUpdateService.markApplied(patch.patchVersion);
   }
 
   static final List<BentoItem> _items = [
@@ -112,14 +146,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             return CustomScrollView(
               slivers: [
-                const SliverPadding(
-                  padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
                   sliver: SliverToBoxAdapter(
                     child: Row(
                       children: [
-                        Icon(Icons.home_rounded, color: Color(0xFF6C8CFF)),
-                        SizedBox(width: 8),
-                        Text(
+                        const Icon(Icons.home_rounded,
+                            color: Color(0xFF6C8CFF)),
+                        const SizedBox(width: 8),
+                        const Text(
                           'Kính',
                           style: TextStyle(
                             color: Colors.white,
@@ -127,10 +162,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.system_update_alt_rounded,
+                              color: Colors.white70),
+                          tooltip: 'Kiểm tra cập nhật',
+                          onPressed: () => _checkUpdate(force: true),
+                        ),
                       ],
                     ),
                   ),
                 ),
+                if (_dashboardNotice != null)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    sliver: SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6C8CFF).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFF6C8CFF).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.campaign_rounded,
+                                size: 18, color: Color(0xFF6C8CFF)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _dashboardNotice!,
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 13),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close_rounded,
+                                  size: 16, color: Colors.white54),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () =>
+                                  setState(() => _dashboardNotice = null),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 // Nút mở trình duyệt nhanh
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
