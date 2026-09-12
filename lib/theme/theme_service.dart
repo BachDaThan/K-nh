@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Theme System — màu seed, sáng/tối, blur, preset nền.
-/// Lưu local, 100% client-side.
 class ThemeService {
   static const _kSeed = 'kinh_theme_seed';
-  static const _kMode = 'kinh_theme_mode'; // system | light | dark
+  static const _kMode = 'kinh_theme_mode';
   static const _kBlur = 'kinh_theme_blur';
   static const _kPreset = 'kinh_theme_preset';
+  static const _kSidebar = 'kinh_theme_sidebar';
 
   int seedColor = 0xFF6C8CFF;
   ThemeMode themeMode = ThemeMode.dark;
   double blurSigma = 12;
-  String presetId = 'midnight'; // midnight | ocean | forest | sunset | mono
+  String presetId = 'midnight';
+  bool sidebarVisible = true;
 
   static const Map<String, Color> presets = {
     'midnight': Color(0xFF121212),
@@ -20,6 +20,8 @@ class ThemeService {
     'forest': Color(0xFF0D1A12),
     'sunset': Color(0xFF1A1210),
     'mono': Color(0xFF1C1C1C),
+    'slate': Color(0xFF151A21),
+    'grape': Color(0xFF16121C),
   };
 
   static const Map<String, int> accentPresets = {
@@ -28,6 +30,7 @@ class ThemeService {
     'teal': 0xFF64FFDA,
     'amber': 0xFFFFC46C,
     'rose': 0xFFFF8A80,
+    'lime': 0xFFB2FF59,
   };
 
   Future<void> load() async {
@@ -35,6 +38,7 @@ class ThemeService {
     seedColor = p.getInt(_kSeed) ?? 0xFF6C8CFF;
     blurSigma = p.getDouble(_kBlur) ?? 12;
     presetId = p.getString(_kPreset) ?? 'midnight';
+    sidebarVisible = p.getBool(_kSidebar) ?? true;
     final mode = p.getString(_kMode) ?? 'dark';
     themeMode = switch (mode) {
       'light' => ThemeMode.light,
@@ -48,6 +52,7 @@ class ThemeService {
     await p.setInt(_kSeed, seedColor);
     await p.setDouble(_kBlur, blurSigma);
     await p.setString(_kPreset, presetId);
+    await p.setBool(_kSidebar, sidebarVisible);
     await p.setString(
       _kMode,
       switch (themeMode) {
@@ -62,21 +67,23 @@ class ThemeService {
 
   ThemeData buildTheme(Brightness brightness) {
     final seed = Color(seedColor);
+    final bg =
+        brightness == Brightness.dark ? scaffoldBg : const Color(0xFFF5F5F7);
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
-      scaffoldBackgroundColor:
-          brightness == Brightness.dark ? scaffoldBg : const Color(0xFFF5F5F7),
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: seed,
-        brightness: brightness,
-      ),
+      scaffoldBackgroundColor: bg,
+      colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: brightness),
       fontFamily: 'Roboto',
+      appBarTheme: AppBarTheme(
+        backgroundColor: bg,
+        foregroundColor:
+            brightness == Brightness.dark ? Colors.white : Colors.black87,
+      ),
     );
   }
 }
 
-/// Controller toàn app — notify khi theme đổi.
 class ThemeController extends ChangeNotifier {
   final ThemeService service = ThemeService();
   bool ready = false;
@@ -110,8 +117,12 @@ class ThemeController extends ChangeNotifier {
     await service.save();
     notifyListeners();
   }
+
+  Future<void> setSidebarVisible(bool v) async {
+    service.sidebarVisible = v;
+    await service.save();
+    notifyListeners();
+  }
 }
 
-
-/// Singleton theme controller toàn app.
 final themeController = ThemeController();

@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../models/bento_item.dart';
+import '../theme/theme_service.dart';
 
-/// Một ô Bento Grid, phong cách Glassmorphism trên nền tối.
 class BentoCard extends StatelessWidget {
   final BentoItem item;
   final VoidCallback? onTap;
@@ -12,13 +12,16 @@ class BentoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = item.accentColor ?? Theme.of(context).colorScheme.primary;
+    final blur = themeController.service.blurSigma;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Material(
-          color: Colors.white.withOpacity(0.06),
+          color: isDark ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.04),
           child: InkWell(
             onTap: onTap,
             splashColor: accent.withOpacity(0.25),
@@ -27,8 +30,7 @@ class BentoCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.10),
-                  width: 1,
+                  color: isDark ? Colors.white.withOpacity(0.10) : Colors.black12,
                 ),
               ),
               padding: const EdgeInsets.all(14),
@@ -39,18 +41,13 @@ class BentoCard extends StatelessWidget {
                   item.iconBytes != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(6),
-                          child: Image.memory(
-                            item.iconBytes!,
-                            width: 26,
-                            height: 26,
-                          ),
+                          child: Image.memory(item.iconBytes!, width: 26, height: 26),
                         )
-                      : Icon(item.icon ?? Icons.apps_rounded,
-                          color: accent, size: 26),
+                      : Icon(item.icon ?? Icons.apps_rounded, color: accent, size: 26),
                   Text(
                     item.title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: textColor,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),

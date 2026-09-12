@@ -207,6 +207,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
 
+    return ListenableBuilder(
+      listenable: themeController,
+      builder: (context, _) {
     final pins = _pinnedAppItems
         .where((e) => e.packageName != null)
         .map((e) => SidebarPin(
@@ -222,28 +225,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AppSidebar(
-              onHome: () {},
-              onBrowser: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const BrowserScreen()),
-                );
-              },
-              onAiBuilder: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AiBuilderScreen()),
-                );
-              },
-              onTheme: _openThemeSettings,
-              onCheckUpdate: () => _checkUpdate(force: true),
-              pins: pins,
-              onPinTap: (pin) async {
-                if (pin.packageName != null) {
-                  await _appLauncherService.openApp(pin.packageName!);
-                }
-              },
-            ),
-            const VerticalDivider(width: 1),
+            if (themeController.service.sidebarVisible) ...[
+              AppSidebar(
+                onHome: () {},
+                onBrowser: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const BrowserScreen()),
+                  );
+                },
+                onAiBuilder: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AiBuilderScreen()),
+                  );
+                },
+                onTheme: _openThemeSettings,
+                onCheckUpdate: () => _checkUpdate(force: true),
+                pins: pins,
+                onPinTap: (pin) async {
+                  if (pin.packageName != null) {
+                    await _appLauncherService.openApp(pin.packageName!);
+                  }
+                },
+              ),
+              const VerticalDivider(width: 1),
+            ],
             Expanded(
               child: LayoutBuilder(
           builder: (context, constraints) {
@@ -385,5 +390,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ), // SafeArea child Row
       ), // SafeArea
     ); // Scaffold
+      },
+    ); // ListenableBuilder
   }
 }

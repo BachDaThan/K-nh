@@ -72,6 +72,32 @@ jobs:
       - name: Tải dependencies
         run: flutter pub get
 
+      - name: Cấu hình ký release APK (KEYSTORE secrets)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ] || [ -z "${KEYSTORE_PASSWORD:-}" ] || [ -z "${KEYSTORE_ALIAS:-}" ]; then
+            echo "::warning::Thiếu KEYSTORE_* secrets. APK ký bằng key mặc định — KHÔNG cài đè được lên bản đã ký key khác (phải gỡ app cũ)."
+            exit 0
+          fi
+          KEY_PASS="${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+          mkdir -p android/app
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/kinh-release.jks
+          printf '%s\n' \
+            "storePassword=$KEYSTORE_PASSWORD" \
+            "keyPassword=$KEY_PASS" \
+            "keyAlias=$KEYSTORE_ALIAS" \
+            "storeFile=kinh-release.jks" \
+            > android/app/key.properties
+          cp android/app/key.properties android/key.properties
+          cp android/app/kinh-release.jks android/kinh-release.jks
+          python3 tool/ci_inject_signing.py
+          echo "Release signing configured."
+
       - name: Build APK (release)
         run: flutter build apk --release
 
