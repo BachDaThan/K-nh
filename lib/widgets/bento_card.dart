@@ -36,7 +36,17 @@ class BentoCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(item.icon, color: accent, size: 26),
+                  item.iconBytes != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.memory(
+                            item.iconBytes!,
+                            width: 26,
+                            height: 26,
+                          ),
+                        )
+                      : Icon(item.icon ?? Icons.apps_rounded,
+                          color: accent, size: 26),
                   Text(
                     item.title,
                     style: const TextStyle(

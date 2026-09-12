@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 /// Kích thước một ô trong lưới Bento Grid, tính theo số cột/hàng chiếm dụng.
@@ -12,16 +13,20 @@ enum BentoSize {
 class BentoItem {
   final String id;
   final String title;
-  final IconData icon;
+  final IconData? icon;
+  final Uint8List? iconBytes; // icon app thật (ưu tiên hơn `icon` nếu có)
   final BentoSize size;
   final Color? accentColor;
+  final String? packageName; // khác null nếu đây là lối tắt app đã ghim
 
   const BentoItem({
     required this.id,
     required this.title,
-    required this.icon,
+    this.icon,
+    this.iconBytes,
     this.size = BentoSize.small,
     this.accentColor,
+    this.packageName,
   });
 
   int get crossAxisCellCount {

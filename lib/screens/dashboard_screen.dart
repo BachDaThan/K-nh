@@ -7,6 +7,8 @@ import '../ai/screens/ai_builder_screen.dart';
 import '../update/services/update_service.dart';
 import '../update/services/hot_update_service.dart';
 import '../update/widgets/update_dialog.dart';
+import '../launcher/services/app_launcher_service.dart';
+import '../launcher/widgets/app_picker_sheet.dart';
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
 class DashboardScreen extends StatefulWidget {
@@ -19,16 +21,56 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final _updateService = UpdateService();
   final _hotUpdateService = HotUpdateService();
+  final _appLauncherService = AppLauncherService();
   String? _dashboardNotice;
+  List<BentoItem> _pinnedAppItems = [];
 
   @override
   void initState() {
     super.initState();
+    _loadPinnedApps();
     // Check update sau khi frame đầu vẽ xong, không chặn UI khởi động.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUpdate();
       _checkHotPatch();
     });
+  }
+
+  Future<void> _loadPinnedApps() async {
+    final pinnedNames = await _appLauncherService.getPinnedPackageNames();
+    if (pinnedNames.isEmpty) {
+      if (mounted) setState(() => _pinnedAppItems = []);
+      return;
+    }
+    // Cần quét lại toàn bộ app để lấy tên + icon hiện tại (tên/icon có thể
+    // đổi sau khi app cập nhật) — chấp nhận chi phí này vì danh sách
+    // thường không quá dài và chỉ chạy khi mở Dashboard.
+    final all = await _appLauncherService.listInstalledApps();
+    final byPackage = {for (final a in all) a.packageName: a};
+    final items = <BentoItem>[];
+    for (final pkg in pinnedNames) {
+      final app = byPackage[pkg];
+      if (app == null) continue; // app đã bị gỡ — bỏ qua, không hiện lỗi
+      items.add(BentoItem(
+        id: 'app_$pkg',
+        title: app.name,
+        iconBytes: app.icon,
+        size: BentoSize.small,
+        packageName: pkg,
+      ));
+    }
+    if (mounted) setState(() => _pinnedAppItems = items);
+  }
+
+  Future<void> _openAppPicker(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AppPickerSheet(service: _appLauncherService),
+    );
+    // Sau khi đóng sheet, làm mới danh sách ghim (có thể đã đổi).
+    await _loadPinnedApps();
   }
 
   Future<void> _checkUpdate({bool force = false}) async {
@@ -125,6 +167,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const AiBuilderScreen()),
       );
+      return;
+    }
+    if (item.id == 'add_app') {
+      _openAppPicker(context);
+      return;
+    }
+    if (item.packageName != null) {
+      // Item này là app đã ghim — mở app qua Intent hệ thống, không chiếm
+      // dụng RAM trình duyệt (đúng thiết kế gốc: App Launcher mở app gốc
+      // trực tiếp, không nhúng WebView).
+      _appLauncherService.openApp(item.packageName!);
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
@@ -239,24 +292,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // Bento grid
                 SliverPadding(
                   padding: const EdgeInsets.all(16),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 1,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = _items[index];
-                        return BentoCard(
-                          item: item,
-                          onTap: () => _onItemTap(context, item),
-                        );
-                      },
-                      childCount: _items.length,
-                    ),
-                  ),
+                  sliver: Builder(builder: (context) {
+                    // Item "add_app" luôn ở cuối; app đã ghim chèn ngay
+                    // trước nó.
+                    final fixedItems =
+                        _items.where((i) => i.id != 'add_app').toList();
+                    final addAppItem =
+                        _items.firstWhere((i) => i.id == 'add_app');
+                    final displayItems = [
+                      ...fixedItems,
+                      ..._pinnedAppItems,
+                      addAppItem,
+                    ];
+                    return SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 14,
+                        childAspectRatio: 1,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item = displayItems[index];
+                          return BentoCard(
+                            item: item,
+                            onTap: () => _onItemTap(context, item),
+                          );
+                        },
+                        childCount: displayItems.length,
+                      ),
+                    );
+                  }),
                 ),
               ],
             );

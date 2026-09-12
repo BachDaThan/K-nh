@@ -1,8 +1,18 @@
 # Tiến độ dự án Kính
 
-## Trạng thái hiện tại: Bước 5/6 — hoàn thành ✅ (Binary Update + Hot Update + Ed25519)
+## Trạng thái hiện tại: Bước 6/6 (một phần) — App Launcher ✅
 
-### Bước 5 — Hot Update + Ed25519 (mới)
+### Bước 6 — App Launcher (mới)
+- [x] **AppLauncherService** (`lib/launcher/services/app_launcher_service.dart`): quét app đã cài trên Android qua package `installed_apps` (không phải `device_apps` — package đó đã discontinued)
+- [x] Cần quyền `QUERY_ALL_PACKAGES` — đã thêm tự động qua CI (chèn vào AndroidManifest cùng lúc với INTERNET)
+- [x] **AppPickerSheet** (`lib/launcher/widgets/app_picker_sheet.dart`): bottom sheet tìm kiếm + ghim/bỏ ghim app, hiển thị icon thật của từng app
+- [x] `BentoItem` mở rộng: `icon` giờ optional, thêm `iconBytes` (icon app thật) và `packageName` (đánh dấu đây là lối tắt app, không phải widget cố định)
+- [x] Dashboard: app đã ghim hiện thành ô Bento Grid riêng, chèn trước ô "+ Thêm App" (luôn ở cuối); bấm vào app ghim → mở qua Intent hệ thống (`InstalledApps.startApp`), không chiếm RAM trình duyệt — đúng thiết kế gốc
+- [x] Chỉ hỗ trợ Android (Windows chưa làm — cần registry/Start Menu, phức tạp hơn, để sau nếu cần)
+- [ ] Sidebar (thanh lối tắt bên) — chưa làm
+- [ ] Theme System (đổi màu, ảnh nền, blur, custom CSS) — chưa làm
+
+### Bước 5 — Hot Update + Ed25519 (đã xong)
 - [x] **HotUpdateService** (`lib/update/services/hot_update_service.dart`): tải `hotpatch.json` qua jsDelivr, verify chữ ký Ed25519 **bắt buộc** trước khi tin tưởng nội dung — không có chữ ký hoặc chữ ký sai → từ chối hoàn toàn, không áp dụng
 - [x] Public key Ed25519 nhúng cứng trong app (an toàn khi công khai); private key **KHÔNG BAO GIỜ** vào repo/CI — chỉ tồn tại offline trên máy người ký
 - [x] Ký bằng canonical string cố định (`patch_version=...\nrunner_html=...\ndashboard_notice=...`), KHÔNG dùng JSON string để verify (thứ tự key JSON sau decode không đảm bảo giống lúc ký → verify sẽ fail ngẫu nhiên nếu dùng JSON)
@@ -47,8 +57,8 @@
 - Version: `0.5.0+8`
 
 ### Tiếp theo
+- [ ] **Bước 6 (còn lại)** — Sidebar, Theme System
 - [ ] **Bước 5 (còn lại)** — Cloud Sync (Google Drive backup), Chia sẻ 1-Click (QR/Rentry/Gist)
-- [ ] **Bước 6** — App Launcher, Sidebar, Theme
 
 ### Ghi chú Bước 4
 - Không nhúng full Monaco/Xterm.js native (tránh phình APK + phức tạp Windows); editor Flutter + runner WASM/JS đủ dùng.
