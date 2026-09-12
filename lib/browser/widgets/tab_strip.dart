@@ -33,6 +33,7 @@ class TabStrip extends StatelessWidget {
                 final tab = tabs[index];
                 final active = tab.id == activeTabId;
                 return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () => onSelect(tab.id),
                   child: Container(
                     width: 160,
@@ -86,9 +87,21 @@ class TabStrip extends StatelessWidget {
                           ),
                         ),
                         GestureDetector(
+                          // Chặn sự kiện tap không lan ra GestureDetector
+                          // cha (onSelect) — trước đây thiếu behavior này
+                          // khiến 2 gesture tranh nhau, phải bấm nhiều lần
+                          // mới ăn.
+                          behavior: HitTestBehavior.opaque,
                           onTap: () => onClose(tab.id),
-                          child: const Icon(Icons.close,
-                              size: 14, color: Colors.white54),
+                          child: Padding(
+                            // Icon gốc chỉ 14px — quá nhỏ so với chuẩn tối
+                            // thiểu vùng chạm cảm ứng (~44-48dp). Thêm
+                            // padding để vùng chạm thực tế đủ lớn mà
+                            // không đổi kích thước icon hiển thị.
+                            padding: const EdgeInsets.all(10),
+                            child: const Icon(Icons.close,
+                                size: 14, color: Colors.white54),
+                          ),
                         ),
                       ],
                     ),
