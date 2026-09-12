@@ -2,5 +2,5 @@
   "version": "0.8.0",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Live Weather + Wi‑Fi trên Bento; CI bắt buộc KEYSTORE (cài đè); micro-animation giữ glow/scale"
+  "changelog": "Bản build tự động từ commit 6673358 (v0.8.0)"
 }
