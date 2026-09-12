@@ -99,7 +99,9 @@ class _AiBuilderScreenState extends State<AiBuilderScreen> {
       }
     }
 
-    c.loadHtmlString(_runnerHtml);
+    // baseUrl giúp trang có origin HTTPS hợp lệ thay vì null/about:blank —
+    // cần thiết để fetch() tới CDN Pyodide không bị chặn bởi CORS/mixed-content.
+    c.loadHtmlString(_runnerHtml, baseUrl: 'https://kinh.local/');
     _runner = c;
   }
 
@@ -121,13 +123,28 @@ async function ensurePy() {
   if (pyLoading) return pyLoading;
   document.getElementById('status').innerText = 'Đang tải Pyodide…';
   pyLoading = (async () => {
-    await new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
-      s.onload = res; s.onerror = () => rej(new Error('Không tải được Pyodide (cần mạng)'));
-      document.head.appendChild(s);
-    });
-    pyodide = await loadPyodide();
+    // Lưu ý: loadHtmlString() khiến trang có origin null/about:blank, và
+    // một số WebView Android silently fail (không báo onerror) khi chèn
+    // <script src="https://..."> động trong ngữ cảnh origin null — biến
+    // toàn cục loadPyodide không được gán, gây lỗi
+    // "TypeError: loadPyodide is not a function".
+    // Sửa: tự fetch() mã nguồn JS rồi eval qua Function() — cách này báo
+    // lỗi rõ ràng qua try/catch bình thường thay vì fail âm thầm.
+    const PYODIDE_BASE = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
+    let jsCode;
+    try {
+      const res = await fetch(PYODIDE_BASE + 'pyodide.js');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      jsCode = await res.text();
+    } catch (e) {
+      throw new Error('Không tải được Pyodide (cần mạng): ' + e.message);
+    }
+    // Chạy script trong scope toàn cục để loadPyodide được gán vào window.
+    (0, eval)(jsCode);
+    if (typeof loadPyodide !== 'function') {
+      throw new Error('Pyodide script tải xong nhưng loadPyodide vẫn undefined — có thể do phiên bản script thay đổi.');
+    }
+    pyodide = await loadPyodide({ indexURL: PYODIDE_BASE });
     document.getElementById('status').innerText = 'Pyodide sẵn sàng';
     return pyodide;
   })();

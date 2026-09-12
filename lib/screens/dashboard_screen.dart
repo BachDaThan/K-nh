@@ -3,10 +3,32 @@ import '../models/bento_item.dart';
 import '../widgets/bento_card.dart';
 import '../browser/screens/browser_screen.dart';
 import '../ai/screens/ai_builder_screen.dart';
+import '../update/services/update_service.dart';
+import '../update/widgets/update_dialog.dart';
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final _updateService = UpdateService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Check update sau khi frame đầu vẽ xong, không chặn UI khởi động.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkUpdate());
+  }
+
+  Future<void> _checkUpdate() async {
+    final info = await _updateService.check();
+    if (!mounted) return;
+    await showUpdateDialogIfNeeded(context, info);
+  }
 
   static final List<BentoItem> _items = [
     const BentoItem(
