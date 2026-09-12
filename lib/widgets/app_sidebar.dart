@@ -163,13 +163,21 @@ class _NavIcon extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: selected
-                      ? color.withOpacity(0.22)
-                      : Colors.white.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(12),
+                      ? color.withOpacity(0.28)
+                      : Colors.white.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color:
-                        selected ? color.withOpacity(0.5) : Colors.transparent,
+                    color: selected ? color.withOpacity(0.65) : Colors.white10,
                   ),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: color.withOpacity(0.45),
+                            blurRadius: 14,
+                            spreadRadius: 0,
+                          ),
+                        ]
+                      : null,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: imageBytes != null && imageBytes!.isNotEmpty

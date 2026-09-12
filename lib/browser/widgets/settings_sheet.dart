@@ -164,46 +164,45 @@ class _SettingsSheetState extends State<SettingsSheet> {
             if (_dohSelectedId == 'custom')
               Padding(
                 padding: const EdgeInsets.only(left: 16, right: 8, bottom: 8),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _customDohController,
-                        style: const TextStyle(fontSize: 13),
-                        decoration: const InputDecoration(
-                          hintText: 'https://dns.nextdns.io/xxxxx',
-                          isDense: true,
-                          border: OutlineInputBorder(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _customDohController,
+                            style: const TextStyle(fontSize: 13),
+                            decoration: const InputDecoration(
+                              hintText: 'dns.nextdns.io/xxxxx hoặc https://...',
+                              isDense: true,
+                              border: OutlineInputBorder(),
+                            ),
+                            onSubmitted: (_) => _saveCustomDoh(),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          onPressed: _saveCustomDoh,
+                          child: const Text('Lưu'),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: () async {
-                        final url = _customDohController.text.trim();
-                        if (url.startsWith('https://')) {
-                          await widget.dohService.setCustomUrl(url);
-                          widget.onChanged();
-                          setState(() => _dohSelectedId = 'custom');
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Đã lưu DoH tùy chỉnh'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      child: const Text('Lưu'),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Có thể dán không có https:// — app tự thêm. '
+                      'Preset + URL được lưu trên máy.',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withOpacity(0.45)),
                     ),
                   ],
                 ),
               ),
             const SizedBox(height: 8),
             Text(
-              'Lưu ý: System WebView chưa hỗ trợ DoH tầng network như GeckoView. '
-              'Preference được lưu sẵn; khi chuyển sang GeckoBrowserEngine sẽ inject thật.',
+              'Lưu ý: System WebView chưa đổi DNS thật của máy (giới hạn OS). '
+              'Kính vẫn lưu lựa chọn DoH; inject network thật khi có GeckoView.',
               style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4)),
             ),
 

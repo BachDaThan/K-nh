@@ -2,11 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/doh_provider.dart';
 
 /// Quản lý lựa chọn DoH (DNS-over-HTTPS).
-///
-/// Lưu ý kỹ thuật: System WebView / WebView2 không cho phép set DoH
-/// trực tiếp như GeckoView. Implementation hiện tại lưu preference
-/// và (nếu có thể) truyền hint qua proxy / user-script.
-/// Khi chuyển sang GeckoBrowserEngine, sẽ inject DoH thật ở tầng network.
+/// Preference lưu local. System WebView chưa inject DoH tầng OS —
+/// vẫn lưu để UI/Gecko sau này dùng.
 class DohService {
   static const _keyProviderId = 'doh_provider_id';
   static const _keyCustomUrl = 'doh_custom_url';
@@ -47,13 +44,35 @@ class DohService {
     }
   }
 
-  Future<void> setCustomUrl(String url) async {
-    final provider = DohProvider(
+  /// Chuẩn hoá URL DoH: thêm https:// nếu thiếu, bỏ khoảng trắng.
+  static String? normalizeUrl(String raw) {
+    var u = raw.trim();
+    if (u.isEmpty) return null;
+    if (!u.contains('://')) {
+      u = 'https://$u';
+    }
+    final uri = Uri.tryParse(u);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) return null;
+    if (uri.scheme != 'https' && uri.scheme != 'http') return null;
+    // DoH endpoint nên là https
+    if (uri.scheme == 'http') {
+      u = u.replaceFirst('http://', 'https://');
+    }
+    return u;
+  }
+
+  /// Trả về null nếu OK, hoặc chuỗi lỗi tiếng Việt.
+  Future<String?> setCustomUrl(String raw) async {
+    final url = normalizeUrl(raw);
+    if (url == null) {
+      return 'URL không hợp lệ. Ví dụ: https://dns.nextdns.io/abc123';
+    }
+    await setProvider(DohProvider(
       id: 'custom',
       name: 'DoH tùy chỉnh',
-      url: url.trim(),
+      url: url,
       isCustom: true,
-    );
-    await setProvider(provider);
+    ));
+    return null;
   }
 }

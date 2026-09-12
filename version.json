@@ -1,6 +1,6 @@
 {
-  "version": "0.7.1",
+  "version": "0.7.2",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 0677187 (v0.7.1)"
+  "changelog": "UI glow/glass lung linh + fix lưu DoH tùy chỉnh (tự thêm https://)"
 }

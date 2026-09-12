@@ -8,36 +8,37 @@ class ThemeService {
   static const _kPreset = 'kinh_theme_preset';
   static const _kSidebar = 'kinh_theme_sidebar';
 
-  int seedColor = 0xFF6C8CFF;
+  int seedColor = 0xFF7C9CFF;
   ThemeMode themeMode = ThemeMode.dark;
-  double blurSigma = 12;
-  String presetId = 'midnight';
+  double blurSigma = 14;
+  String presetId = 'aurora';
   bool sidebarVisible = true;
 
   static const Map<String, Color> presets = {
+    'aurora': Color(0xFF0B1020),
     'midnight': Color(0xFF121212),
-    'ocean': Color(0xFF0A1628),
-    'forest': Color(0xFF0D1A12),
-    'sunset': Color(0xFF1A1210),
+    'ocean': Color(0xFF061525),
+    'forest': Color(0xFF0A1610),
+    'sunset': Color(0xFF1A0E0C),
+    'neon': Color(0xFF0A0A14),
     'mono': Color(0xFF1C1C1C),
-    'slate': Color(0xFF151A21),
-    'grape': Color(0xFF16121C),
   };
 
   static const Map<String, int> accentPresets = {
-    'blue': 0xFF6C8CFF,
-    'purple': 0xFFB388FF,
-    'teal': 0xFF64FFDA,
-    'amber': 0xFFFFC46C,
-    'rose': 0xFFFF8A80,
-    'lime': 0xFFB2FF59,
+    'blue': 0xFF7C9CFF,
+    'purple': 0xFFC4A0FF,
+    'cyan': 0xFF5CFFE7,
+    'amber': 0xFFFFD27A,
+    'rose': 0xFFFF8FB0,
+    'lime': 0xFFB8FF6A,
+    'magenta': 0xFFFF6AD5,
   };
 
   Future<void> load() async {
     final p = await SharedPreferences.getInstance();
-    seedColor = p.getInt(_kSeed) ?? 0xFF6C8CFF;
-    blurSigma = p.getDouble(_kBlur) ?? 12;
-    presetId = p.getString(_kPreset) ?? 'midnight';
+    seedColor = p.getInt(_kSeed) ?? 0xFF7C9CFF;
+    blurSigma = p.getDouble(_kBlur) ?? 14;
+    presetId = p.getString(_kPreset) ?? 'aurora';
     sidebarVisible = p.getBool(_kSidebar) ?? true;
     final mode = p.getString(_kMode) ?? 'dark';
     themeMode = switch (mode) {
@@ -63,12 +64,12 @@ class ThemeService {
     );
   }
 
-  Color get scaffoldBg => presets[presetId] ?? presets['midnight']!;
+  Color get scaffoldBg => presets[presetId] ?? presets['aurora']!;
 
   ThemeData buildTheme(Brightness brightness) {
     final seed = Color(seedColor);
     final bg =
-        brightness == Brightness.dark ? scaffoldBg : const Color(0xFFF5F5F7);
+        brightness == Brightness.dark ? scaffoldBg : const Color(0xFFF4F6FB);
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,
@@ -76,7 +77,8 @@ class ThemeService {
       colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: brightness),
       fontFamily: 'Roboto',
       appBarTheme: AppBarTheme(
-        backgroundColor: bg,
+        backgroundColor: bg.withOpacity(0.92),
+        elevation: 0,
         foregroundColor:
             brightness == Brightness.dark ? Colors.white : Colors.black87,
       ),
