@@ -33,20 +33,27 @@ class SearchDiversityService {
     // Đã là URL thì không đụng.
     if (q.contains('://') || q.startsWith('www.')) return q;
 
+    // Lưu ý: Google KHÔNG hỗ trợ wildcard (*) trong toán tử site: — vd
+    // "site:*.blog" gần như vô nghĩa và bị Google bỏ qua lặng lẽ, khiến kết
+    // quả trông "không đổi gì" dù kéo thanh lên mức cao nhất.
+    // Sửa: liệt kê domain cụ thể để site: có tác dụng thật.
     if (_index <= 0.15) {
       // Chỉ nguồn chính thống
-      return '$q (site:.gov OR site:.edu OR site:wikipedia.org OR site:bbc.com OR site:reuters.com OR site:nytimes.com)';
+      return '$q (site:wikipedia.org OR site:bbc.com OR site:reuters.com OR '
+          'site:nytimes.com OR site:.gov OR site:.edu)';
     } else if (_index <= 0.4) {
-      return '$q (site:.gov OR site:.edu OR site:wikipedia.org OR site:*.edu.*)';
+      return '$q (site:wikipedia.org OR site:.gov OR site:.edu)';
     } else if (_index <= 0.7) {
       // Tiêu chuẩn — không thêm filter
       return q;
     } else if (_index <= 1.2) {
-      // Mở rộng nhẹ
-      return '$q (blog OR forum OR "personal site" OR medium.com OR reddit.com OR stackoverflow.com)';
+      // Mở rộng nhẹ — domain cụ thể, Google chấp nhận site: dạng này
+      return '$q (site:medium.com OR site:reddit.com OR site:stackoverflow.com '
+          'OR site:dev.to OR site:substack.com)';
     } else {
-      // Rất đa dạng / ngách
-      return '$q (site:*.blog OR site:*.xyz OR site:*.io OR inurl:forum OR inurl:board OR "obscure" OR niche)';
+      // Rất đa dạng / ngách — domain cụ thể thay cho wildcard TLD không hợp lệ
+      return '$q (site:reddit.com OR site:quora.com OR site:tumblr.com OR '
+          'site:blogspot.com OR site:wordpress.com OR inurl:forum OR inurl:board)';
     }
   }
 
