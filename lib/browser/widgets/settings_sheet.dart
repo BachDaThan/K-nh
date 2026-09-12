@@ -50,6 +50,32 @@ class _SettingsSheetState extends State<SettingsSheet> {
     }
   }
 
+  Future<void> _saveCustomDoh() async {
+    final err = await widget.dohService.setCustomUrl(_customDohController.text);
+    if (!mounted) return;
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.redAccent.shade700,
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _dohSelectedId = 'custom';
+      _customDohController.text = widget.dohService.current.url;
+    });
+    widget.onChanged();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Đã lưu DoH: ${widget.dohService.current.url}'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _customDohController.dispose();
