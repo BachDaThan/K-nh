@@ -113,8 +113,24 @@ jobs:
           fi
           KEY_PASS="${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
           mkdir -p android/app
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/kinh-release.jks
+
+          # Decode base64 an toàn (bỏ whitespace/newline trong secret)
+          python3 - <<'PY'
+          import os, base64, re, pathlib
+          raw = os.environ["KEYSTORE_BASE64"]
+          cleaned = re.sub(r"\s+", "", raw)
+          data = base64.b64decode(cleaned)
+          path = pathlib.Path("android/app/kinh-release.jks")
+          path.write_bytes(data)
+          print(f"keystore bytes={len(data)}")
+          if len(data) < 500:
+              raise SystemExit(f"keystore too small ({len(data)} bytes) — KEYSTORE_BASE64 bị cắt hoặc sai")
+          print(f"keystore magic={data[:4].hex()}")
+          PY
+
           test -s android/app/kinh-release.jks
+          ls -la android/app/kinh-release.jks
+
           printf '%s\n' \
             "storePassword=$KEYSTORE_PASSWORD" \
             "keyPassword=$KEY_PASS" \
@@ -123,6 +139,7 @@ jobs:
             > android/app/key.properties
           cp android/app/key.properties android/key.properties
           cp android/app/kinh-release.jks android/kinh-release.jks
+
           echo "=== gradle files ==="
           ls -la android/app/build.gradle android/app/build.gradle.kts 2>/dev/null || true
           python3 tool/ci_inject_signing.py | tee /tmp/inject.log
@@ -134,7 +151,22 @@ jobs:
             grep -q 'signingConfigs.release' android/app/build.gradle
             echo "Verified Groovy release signing"
           fi
-          keytool -list -keystore android/app/kinh-release.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEYSTORE_ALIAS"
+
+          if keytool -list -storetype PKCS12 -keystore android/app/kinh-release.jks -storepass "$KEYSTORE_PASSWORD" >/tmp/kt.txt 2>&1; then
+            echo "Opened as PKCS12"
+          elif keytool -list -storetype JKS -keystore android/app/kinh-release.jks -storepass "$KEYSTORE_PASSWORD" >/tmp/kt.txt 2>&1; then
+            echo "Opened as JKS"
+          else
+            echo "::error::Không mở được keystore (EOF/sai password/base64 hỏng)."
+            cat /tmp/kt.txt || true
+            echo "Tạo lại KEYSTORE_BASE64 bằng: python3 -c \"import base64,pathlib;print(base64.b64encode(pathlib.Path('kinh-release.jks').read_bytes()).decode())\""
+            exit 1
+          fi
+          cat /tmp/kt.txt
+          if ! grep -q "$KEYSTORE_ALIAS" /tmp/kt.txt; then
+            echo "::error::Alias không khớp KEYSTORE_ALIAS=$KEYSTORE_ALIAS"
+            exit 1
+          fi
           echo "Release signing configured."
 
       - name: Build APK (release)
