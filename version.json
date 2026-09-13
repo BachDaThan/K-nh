@@ -2,5 +2,5 @@
   "version": "0.9.8",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "CI: compileSdk 36 cho file_picker / flutter_plugin_android_lifecycle"
+  "changelog": "Force compileSdk 36 for app + all Android plugins (file_picker)"
 }

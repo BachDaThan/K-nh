@@ -1,4 +1,7 @@
-# Fix compileSdk 36
+# Fix compileSdk 36 (lần 2)
 
-`file_picker` → `flutter_plugin_android_lifecycle` đòi compileSdk ≥ 36.
-CI sau `flutter create` ép `compileSdk = 36` trong `android/app/build.gradle.kts`.
+Sed chỉ sửa app module không đủ / bị Flutter ghi đè.
+`tool/ci_force_compile_sdk.py`:
+- `gradle.properties` → flutter.compileSdkVersion=36
+- patch app build.gradle(.kts)
+- subprojects afterEvaluate ép compileSdk 36 cho mọi plugin (file_picker…)
