@@ -1,4 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../config/app_edition.dart';
+import '../../addons/addon_service.dart';
 import 'web_cosmetics_service.dart';
 
 class AdblockService {
@@ -79,8 +81,10 @@ class AdblockService {
         if (host == b || host.endsWith('.$b') || url.contains(b)) return true;
       }
     }
+    if (AppEdition.isPlus && addonService.shouldBlockHost(url)) return true;
     return false;
   }
 }
+
 
 final adblockService = AdblockService();

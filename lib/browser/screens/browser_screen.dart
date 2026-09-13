@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../config/app_edition.dart';
+import '../../addons/addon_service.dart';
 import '../services/web_cosmetics_service.dart';
 import '../../reader/reader_settings.dart';
 import '../../reader/web_reader_js.dart';
@@ -67,6 +69,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
     _wireEngineCallbacks();
     _initServicesAndFirstTab();
     adblockService.load();
+    if (AppEdition.isPlus) addonService.load();
     webCosmeticsService.load();
     readerSettings.load();
     searchEngineService.onEngineChanged = (engine) {
@@ -232,6 +235,23 @@ class _BrowserScreenState extends State<BrowserScreen> {
     });
   }
 
+
+
+  Future<void> _injectCosmetics(String tabId) async {
+    final js = webCosmeticsService.injectScript(
+      dark: webCosmeticsService.webDarkMode,
+      advAd: webCosmeticsService.advancedAdblock,
+    );
+    try {
+      await _engine.evaluateJavascript(tabId, js);
+      if (AppEdition.isPlus) {
+        final extra = addonService.injectJs();
+        if (extra.trim().isNotEmpty) {
+          await _engine.evaluateJavascript(tabId, extra);
+        }
+      }
+    } catch (_) {}
+  }
 
   void _toggleFind() {
     setState(() => _findVisible = !_findVisible);

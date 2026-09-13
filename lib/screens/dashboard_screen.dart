@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../config/app_edition.dart';
+import '../addons/addon_sheet.dart';
 import '../reader/bookshelf_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -203,12 +205,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
       size: BentoSize.small,
       accentColor: Color(0xFFFFB74D),
     ),
+    const BentoItem(
+      id: 'addons',
+      title: 'Tiện ích giả',
+      icon: Icons.extension_outlined,
+      size: BentoSize.small,
+      accentColor: Color(0xFFCE93D8),
+    ),
 ];
 
   void _onItemTap(BuildContext context, BentoItem item) {
     if (item.id == 'privacy_policy') {
       final uri = Uri.parse(LegalUrls.privacyPolicy);
       launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    if (item.id == 'addons') {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (_) => const AddonSheet(),
+      );
       return;
     }
     if (item.id == 'bookshelf') {
@@ -461,7 +482,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Item "add_app" luôn ở cuối; app đã ghim chèn ngay
                     // trước nó.
                     final fixedItems =
-                        _items.where((i) => i.id != 'add_app').toList();
+                        _items.where((i) => i.id != 'add_app' && (AppEdition.isPlus || i.id != 'addons')).toList();
                     final addAppItem =
                         _items.firstWhere((i) => i.id == 'add_app');
                     final liveFixed = fixedItems.map((e) {

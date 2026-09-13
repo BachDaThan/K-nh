@@ -1,13 +1,12 @@
-# 0.9.7 — Rollback Gecko
+# 0.9.8 — Hai bản song song
 
-## Lỗi CI
-`webview_flutter` không cho 2 implementation cùng lúc:
-`webview_flutter_android` + `webview_flutter_geckoview`.
+## Bản gốc (giữ nguyên)
+- `Kinh.apk` — `com.bachdathan.kinh`
+- `Kinh-Windows.zip`
 
-## Đã làm
-- Gỡ dependency Gecko
-- Gỡ bootstrap / radio chọn nhân
-- Giữ Chromium / WebView2
+## Bản A / Plus (thêm)
+- `Kinh-Plus.apk` — `com.bachdathan.kinh.plus` (cài cạnh bản gốc)
+- `Kinh-Plus-Windows.zip`
+- Thẻ **Tiện ích giả**: User CSS, User JS, tải filter host list
 
-## Nhân khác?
-Xem phần trả lời: trên Flutter hiện **không có** nhân kiểu Firefox ổn định như GeckoView native.
+Không phải Firefox extension store. Cùng repo, `--dart-define=KINH_EDITION=plus`.

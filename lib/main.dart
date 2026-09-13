@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'theme/theme_service.dart';
+import 'config/app_edition.dart';
 import 'browser/services/search_engine_service.dart';
 import 'browser/services/adblock_service.dart';
 
@@ -22,7 +23,7 @@ class KinhApp extends StatelessWidget {
       builder: (context, _) {
         final s = themeController.service;
         return MaterialApp(
-          title: 'Kính',
+          title: AppEdition.displayName,
           debugShowCheckedModeBanner: false,
           themeMode: s.themeMode,
           theme: s.buildTheme(Brightness.light),

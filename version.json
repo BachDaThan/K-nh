@@ -1,6 +1,8 @@
 {
-  "version": "0.9.7",
+  "version": "0.9.8",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Gỡ GeckoView trial (xung đột webview_flutter) — về Chromium ổn định"
+  "plus_apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Plus.apk",
+  "plus_exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Plus-Windows.zip",
+  "changelog": "Hai bản song song: Kinh (gốc) + Kinh Plus (hướng A tiện ích giả)"
 }

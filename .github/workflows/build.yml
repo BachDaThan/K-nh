@@ -197,11 +197,26 @@ jobs:
       - name: Đổi tên APK cho dễ nhận diện
         run: cp build/app/outputs/flutter-apk/app-release.apk Kinh.apk
 
+      - name: Build APK Plus (hướng A, applicationId riêng)
+        run: |
+          set -euo pipefail
+          # Đổi id + label để cài song song với bản gốc
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i 's/applicationId = "com.bachdathan.kinh"/applicationId = "com.bachdathan.kinh.plus"/' android/app/build.gradle.kts || true
+          elif [ -f android/app/build.gradle ]; then
+            sed -i 's/applicationId "com.bachdathan.kinh"/applicationId "com.bachdathan.kinh.plus"/' android/app/build.gradle || true
+          fi
+          sed -i 's/android:label="[^"]*"/android:label="Kính Plus"/' android/app/src/main/AndroidManifest.xml || true
+          flutter build apk --release --dart-define=KINH_EDITION=plus
+          cp build/app/outputs/flutter-apk/app-release.apk Kinh-Plus.apk
+
       - name: Lưu APK làm artifact tạm
         uses: actions/upload-artifact@v4
         with:
           name: kinh-apk
-          path: Kinh.apk
+          path: |
+            Kinh.apk
+            Kinh-Plus.apk
 
   build-windows:
     name: Build EXE (Windows)
@@ -246,11 +261,19 @@ jobs:
       - name: Đóng gói thư mục build thành zip
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath Kinh-Windows.zip
 
+      - name: Build EXE Plus
+        run: flutter build windows --release --dart-define=KINH_EDITION=plus
+
+      - name: Đóng gói Plus
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath Kinh-Plus-Windows.zip
+
       - name: Lưu EXE làm artifact tạm
         uses: actions/upload-artifact@v4
         with:
           name: kinh-windows
-          path: Kinh-Windows.zip
+          path: |
+            Kinh-Windows.zip
+            Kinh-Plus-Windows.zip
 
   release:
     name: Publish lên GitHub Releases
@@ -290,11 +313,15 @@ jobs:
           name: "Kính — bản mới nhất (v${{ steps.ver.outputs.version }})"
           body: |
             Bản build tự động mới nhất từ nhánh main.
-            - `Kinh.apk` — cài trên Android
-            - `Kinh-Windows.zip` — giải nén rồi chạy trên Windows
+            - `Kinh.apk` — bản gốc Android
+            - `Kinh-Plus.apk` — bản A (tiện ích giả), cài song song
+            - `Kinh-Windows.zip` — bản gốc Windows
+            - `Kinh-Plus-Windows.zip` — bản A Windows
           files: |
             dist/Kinh.apk
+            dist/Kinh-Plus.apk
             dist/Kinh-Windows.zip
+            dist/Kinh-Plus-Windows.zip
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
