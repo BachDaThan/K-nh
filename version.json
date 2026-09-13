@@ -2,5 +2,5 @@
   "version": "0.9.8",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Pin file_picker 10.3.10 (11.x missing FilePickerPlugin on Android)"
+  "changelog": "Bản build tự động từ commit 729ab79 (v0.9.8)"
 }
