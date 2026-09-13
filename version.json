@@ -2,5 +2,5 @@
   "version": "0.9.8",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Force compileSdk 36 for app + all Android plugins (file_picker)"
+  "changelog": "file_picker ^11.0.3 + force compileSdk 36"
 }

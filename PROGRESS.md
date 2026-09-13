@@ -1,7 +1,5 @@
-# Fix compileSdk 36 (lần 2)
+# Fix file_picker dependency
 
-Sed chỉ sửa app module không đủ / bị Flutter ghi đè.
-`tool/ci_force_compile_sdk.py`:
-- `gradle.properties` → flutter.compileSdkVersion=36
-- patch app build.gradle(.kts)
-- subprojects afterEvaluate ép compileSdk 36 cho mọi plugin (file_picker…)
+- 5.2.10 xung đột win32 với flutter_secure_storage
+- Dùng file_picker: ^11.0.3 (gợi ý của pub)
+- Giữ ép compileSdk 36 cho Android (AAR metadata)

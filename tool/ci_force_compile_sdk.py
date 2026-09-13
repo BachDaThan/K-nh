@@ -1,94 +1,111 @@
 #!/usr/bin/env python3
-"""Force compileSdk 36 on the app module (required by file_picker metadata)."""
+"""Force compileSdk/targetSdk=36 for app + plugin subprojects (file_picker AAR)."""
 from pathlib import Path
 import re
 import sys
 
 SDK = 36
-ROOT = Path("android")
+
 
 def main() -> None:
-    if not ROOT.is_dir():
-        sys.exit("no android/")
+    android = Path("android")
+    if not android.is_dir():
+        print("No android/", file=sys.stderr)
+        sys.exit(1)
 
-    gp = ROOT / "gradle.properties"
-    lines = gp.read_text().splitlines() if gp.exists() else []
-    kv = {
+    gp = android / "gradle.properties"
+    lines = gp.read_text(encoding="utf-8").splitlines() if gp.exists() else []
+    props = {
         "flutter.compileSdkVersion": str(SDK),
         "flutter.targetSdkVersion": str(SDK),
-        "android.useAndroidX": "true",
     }
     out, seen = [], set()
     for ln in lines:
-        if "=" in ln and not ln.strip().startswith("#"):
-            k = ln.split("=", 1)[0].strip()
-            if k in kv:
-                out.append(f"{k}={kv[k]}")
+        s = ln.strip()
+        if s and not s.startswith("#") and "=" in s:
+            k = s.split("=", 1)[0].strip()
+            if k in props:
+                out.append(f"{k}={props[k]}")
                 seen.add(k)
                 continue
         out.append(ln)
-    for k, v in kv.items():
+    for k, v in props.items():
         if k not in seen:
             out.append(f"{k}={v}")
-    gp.write_text("\n".join(out) + "\n")
-    print("OK gradle.properties")
+    gp.write_text("\n".join(out) + "\n", encoding="utf-8")
+    print(f"gradle.properties flutter.compileSdkVersion={SDK}")
 
     for rel in ("app/build.gradle.kts", "app/build.gradle"):
-        p = ROOT / rel
+        p = android / rel
         if not p.exists():
             continue
-        t = p.read_text()
-        t = re.sub(r"compileSdk\s*=\s*\S+", f"compileSdk = {SDK}", t)
-        t = re.sub(r"targetSdk\s*=\s*\S+", f"targetSdk = {SDK}", t)
-        t = re.sub(r"compileSdkVersion\s+\S+", f"compileSdkVersion {SDK}", t)
-        t = re.sub(r"targetSdkVersion\s+\S+", f"targetSdkVersion {SDK}", t)
-        # Flutter 3.16+ often uses: compileSdk = flutter.compileSdkVersion
-        t = t.replace(
-            "compileSdk = flutter.compileSdkVersion",
-            f"compileSdk = {SDK}",
-        )
-        t = t.replace(
-            "targetSdk = flutter.targetSdkVersion",
-            f"targetSdk = {SDK}",
-        )
-        p.write_text(t)
-        print(f"OK {p}")
-        for i, ln in enumerate(p.read_text().splitlines(), 1):
+        t = p.read_text(encoding="utf-8")
+        t = re.sub(r"compileSdk\s*=\s*[^\n]+", f"compileSdk = {SDK}", t)
+        t = re.sub(r"targetSdk\s*=\s*[^\n]+", f"targetSdk = {SDK}", t)
+        t = re.sub(r"compileSdkVersion\s+[^\n]+", f"compileSdkVersion {SDK}", t)
+        t = re.sub(r"targetSdkVersion\s+[^\n]+", f"targetSdkVersion {SDK}", t)
+        t = t.replace("compileSdk = flutter.compileSdkVersion", f"compileSdk = {SDK}")
+        t = t.replace("targetSdk = flutter.targetSdkVersion", f"targetSdk = {SDK}")
+        if f"compileSdk = {SDK}" not in t and "compileSdkVersion" not in t:
+            t = t.replace("android {", f"android {{\n    compileSdk = {SDK}", 1)
+        p.write_text(t, encoding="utf-8")
+        print(f"patched {p}")
+        for ln in t.splitlines():
             if "compileSdk" in ln or "targetSdk" in ln:
-                print(f"  {i}:{ln}")
+                print(" ", ln.strip())
 
-    # Root: force all library projects (plugins) — pure Groovy closure without typed imports
-    root = ROOT / "build.gradle.kts"
-    if root.exists():
-        t = root.read_text()
-        marker = "kinh-force-plugin-compile-sdk"
-        if marker not in t:
-            t += f"""
-
+    marker = "kinh-force-compile-sdk"
+    root_kts = android / "build.gradle.kts"
+    root_g = android / "build.gradle"
+    force_kts = f"""
 // {marker}
 subprojects {{
-    val sub = this
-    sub.afterEvaluate {{
-        val ext = sub.extensions.findByName("android") ?: return@afterEvaluate
-        try {{
-            val m = ext.javaClass.methods.find {{ it.name == "setCompileSdkVersion" && it.parameterCount == 1 }}
-            m?.invoke(ext, {SDK})
-            println("kinh: forced compileSdkVersion={SDK} on ${{sub.name}}")
-        }} catch (e: Exception) {{
+    pluginManager.withPlugin("com.android.library") {{
+        val androidExt = extensions.findByName("android")
+        if (androidExt != null) {{
             try {{
-                val m2 = ext.javaClass.methods.find {{ it.name == "setCompileSdk" && it.parameterCount == 1 }}
-                m2?.invoke(ext, {SDK})
-                println("kinh: forced compileSdk={SDK} on ${{sub.name}}")
-            }} catch (e2: Exception) {{
-                println("kinh: skip ${{sub.name}}: $e2")
+                val m = androidExt.javaClass.methods.firstOrNull {{
+                    it.name in listOf("setCompileSdkVersion", "setCompileSdk") && it.parameterCount == 1
+                }}
+                m?.invoke(androidExt, {SDK})
+                println("kinh: compileSdk={SDK} on $name")
+            }} catch (e: Exception) {{
+                println("kinh: skip $name ${{e.message}}")
             }}
         }}
     }}
 }}
 """
-            root.write_text(t)
-            print("OK root subprojects force")
+    force_groovy = f"""
+// {marker}
+subprojects {{ project ->
+    project.pluginManager.withPlugin("com.android.library") {{
+        if (project.hasProperty("android")) {{
+            project.android.compileSdkVersion = {SDK}
+        }}
+    }}
+}}
+"""
+    if root_kts.exists():
+        t = root_kts.read_text(encoding="utf-8")
+        if "kinh-force" in t:
+            for key in ("// kinh-force-compile-sdk", "// kinh-force"):
+                i = t.find(key)
+                if i >= 0:
+                    t = t[:i].rstrip() + "\n"
+                    break
+        if marker not in t:
+            t = t.rstrip() + "\n" + force_kts + "\n"
+        root_kts.write_text(t, encoding="utf-8")
+        print("patched android/build.gradle.kts")
+    elif root_g.exists():
+        t = root_g.read_text(encoding="utf-8")
+        if marker not in t:
+            root_g.write_text(t.rstrip() + "\n" + force_groovy + "\n", encoding="utf-8")
+        print("patched android/build.gradle")
+
     print("FORCE_COMPILE_SDK=ok")
+
 
 if __name__ == "__main__":
     main()
