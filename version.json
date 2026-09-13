@@ -1,6 +1,6 @@
 {
-  "version": "0.9.8",
+  "version": "0.9.9",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 729ab79 (v0.9.8)"
+  "changelog": "Audio truyện: TTS nền, auto chương, giọng máy free, nhạc MP3 volume riêng, catalog vBook"
 }

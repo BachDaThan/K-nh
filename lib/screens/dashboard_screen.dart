@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../config/app_edition.dart';
 import '../addons/addon_sheet.dart';
 import '../reader/bookshelf_screen.dart';
+import '../audio/story_audio_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/bento_item.dart';
@@ -199,6 +200,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       accentColor: Color(0xFF9E9E9E),
     ),
     const BentoItem(
+      id: 'story_audio',
+      title: 'Audio truyện',
+      icon: Icons.headphones,
+      size: BentoSize.small,
+      accentColor: Color(0xFFFF8A65),
+    ),
+    const BentoItem(
       id: 'bookshelf',
       title: 'Tủ sách',
       icon: Icons.menu_book_outlined,
@@ -229,6 +237,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
         builder: (_) => const AddonSheet(),
+      );
+      return;
+    }
+    if (item.id == 'story_audio') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const StoryAudioScreen()),
       );
       return;
     }

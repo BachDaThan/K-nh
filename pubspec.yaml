@@ -2,7 +2,7 @@ name: kinh
 description: "Kính - Trình duyệt Dashboard All-in-One, minh bạch và riêng tư."
 publish_to: 'none'
 
-version: 0.9.8+32
+version: 0.9.9+33
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -27,6 +27,8 @@ dependencies:
   cryptography: ^2.7.0
   installed_apps: ^2.1.1
   file_picker: 10.3.10
+  just_audio: ^0.9.40
+  wakelock_plus: ^1.2.8
   flutter_tts: ^4.2.0
   google_sign_in: ^6.2.2
 
