@@ -34,11 +34,38 @@ jobs:
           rm -rf android
           flutter create --platforms=android --project-name=kinh --org=com.bachdathan .
 
-      - name: Áp icon riêng của app vào thư mục vừa sinh
+      - name: Áp icon riêng của app (legacy + adaptive)
         run: |
+          set -euo pipefail
+          RES=android/app/src/main/res
           for dir in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
-            cp assets/icon_${dir}.png android/app/src/main/res/mipmap-${dir}/ic_launcher.png 2>/dev/null || true
+            mkdir -p "$RES/mipmap-${dir}"
+            cp "assets/icon_${dir}.png" "$RES/mipmap-${dir}/ic_launcher.png"
+            # foreground dens (dùng cùng PNG — đủ đẹp trên launcher hiện đại)
+            cp "assets/icon_${dir}.png" "$RES/mipmap-${dir}/ic_launcher_foreground.png" 2>/dev/null || true
           done
+          # Adaptive icon (Android 8+)
+          mkdir -p "$RES/mipmap-anydpi-v26" "$RES/values"
+          if [ -f assets/ic_launcher.xml ]; then
+            cp assets/ic_launcher.xml "$RES/mipmap-anydpi-v26/ic_launcher.xml"
+          else
+            cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background"/>
+              <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+          </adaptive-icon>
+          XML
+          fi
+          # color background
+          if ! grep -q ic_launcher_background "$RES/values/colors.xml" 2>/dev/null; then
+            if [ -f "$RES/values/colors.xml" ]; then
+              sed -i 's|</resources>|    <color name="ic_launcher_background">#0C1228</color>\n</resources>|' "$RES/values/colors.xml"
+            else
+              printf '%s\n' '<?xml version="1.0" encoding="utf-8"?>' '<resources>' '    <color name="ic_launcher_background">#0C1228</color>' '</resources>' > "$RES/values/colors.xml"
+            fi
+          fi
+          echo "Launcher icons applied (legacy + adaptive)"
 
       - name: Đặt tên hiển thị app là "Kính"
         shell: bash

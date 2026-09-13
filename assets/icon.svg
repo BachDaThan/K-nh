@@ -1,39 +1,43 @@
 <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bg" cx="35%" cy="30%" r="80%">
-      <stop offset="0%" stop-color="#1E2233"/>
-      <stop offset="100%" stop-color="#0D0E14"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0C1228"/>
+      <stop offset="50%" stop-color="#141C3A"/>
+      <stop offset="100%" stop-color="#0A1820"/>
+    </linearGradient>
+    <radialGradient id="g1" cx="30%" cy="25%" r="50%">
+      <stop offset="0%" stop-color="#6C8CFF" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#6C8CFF" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="lens" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8FA8FF"/>
-      <stop offset="45%" stop-color="#6C8CFF"/>
-      <stop offset="100%" stop-color="#3E52C7"/>
+    <radialGradient id="g2" cx="75%" cy="70%" r="45%">
+      <stop offset="0%" stop-color="#C080FF" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#C080FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lens" x1="20%" y1="10%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#C8D6FF"/>
+      <stop offset="40%" stop-color="#7C9CFF"/>
+      <stop offset="100%" stop-color="#3A4CC0"/>
     </linearGradient>
-    <linearGradient id="facet1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#C9D5FF" stop-opacity="0.85"/>
-      <stop offset="100%" stop-color="#C9D5FF" stop-opacity="0.05"/>
-    </linearGradient>
-    <linearGradient id="facet2" x1="100%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-    </linearGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
   </defs>
-
-  <!-- nền bo góc kiểu Bento -->
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-
-  <!-- viên kính / thấu kính đa giác cách điệu, tượng trưng cho "soi rõ mọi thứ" -->
-  <g transform="translate(256 266)">
-    <polygon points="0,-140 121,-70 121,70 0,140 -121,70 -121,-70"
-             fill="url(#lens)" stroke="#0D0E14" stroke-width="6"/>
-    <!-- các mặt cắt facet tạo chiều sâu như viên đá quý -->
-    <polygon points="0,-140 121,-70 0,-10" fill="url(#facet1)"/>
-    <polygon points="0,-140 -121,-70 0,-10" fill="url(#facet2)"/>
-    <polygon points="121,-70 121,70 0,-10" fill="#4A5FD9" opacity="0.55"/>
-    <polygon points="-121,-70 -121,70 0,-10" fill="#5568E0" opacity="0.4"/>
-    <polygon points="121,70 0,140 0,-10" fill="#2E3DA8" opacity="0.6"/>
-    <polygon points="-121,70 0,140 0,-10" fill="#3B4BC0" opacity="0.5"/>
-    <!-- điểm sáng phản chiếu -->
-    <ellipse cx="-40" cy="-70" rx="22" ry="34" fill="#FFFFFF" opacity="0.6"/>
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="115" fill="url(#g1)"/>
+  <rect width="512" height="512" rx="115" fill="url(#g2)"/>
+  <!-- soft glow behind crystal -->
+  <polygon points="256,110 380,182 380,326 256,398 132,326 132,182"
+           fill="#6C8CFF" opacity="0.35" filter="url(#blur)"
+           transform="translate(0 8)"/>
+  <g transform="translate(0 8)">
+    <polygon points="256,118 372,186 372,322 256,390 140,322 140,186"
+             fill="url(#lens)" stroke="#0A0E1C" stroke-width="5"/>
+    <polygon points="256,118 372,186 256,254" fill="#FFFFFF" opacity="0.45"/>
+    <polygon points="256,118 140,186 256,254" fill="#FFFFFF" opacity="0.22"/>
+    <polygon points="372,186 372,322 256,254" fill="#3E52C7" opacity="0.55"/>
+    <polygon points="372,322 256,390 256,254" fill="#2A3AA8" opacity="0.65"/>
+    <polygon points="140,322 256,390 256,254" fill="#3548B8" opacity="0.5"/>
+    <polygon points="140,186 140,322 256,254" fill="#5A72E0" opacity="0.4"/>
+    <ellipse cx="210" cy="175" rx="22" ry="36" fill="#FFFFFF" opacity="0.7"/>
   </g>
 </svg>
