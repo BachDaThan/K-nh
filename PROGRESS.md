@@ -1,15 +1,10 @@
-# Kính — 0.8.1
+# 0.8.2 — Fix ký APK (cài đè)
 
-## Icon launcher (avatar ngoài home)
-- Icon mới: nền aurora, crystal phát sáng, khớp UI glow trong app
-- PNG đủ mật độ mdpi→xxxhdpi
-- Adaptive icon (Android 8+): foreground + background #0C1228
-- CI copy cả legacy `ic_launcher.png` và adaptive
+## Nguyên nhân cài đè fail dù đã có secrets
+Flutter 3.47 sinh `android/app/build.gradle.kts` (Kotlin DSL).
+Script cũ chỉ patch `build.gradle` (Groovy) → **bỏ qua ký** → APK vẫn debug/default key → Android từ chối cài đè.
 
-## Tiến độ tổng
-- Bước 1–6: xong (Dashboard, Browser, Bảo mật, AI, OTA, Launcher/Sidebar/Theme)
-- Live cards + UI glow: xong
-- **Tiếp theo gợi ý:** Splash screen theo theme, Live Weather theo vị trí (nếu user cho quyền), hoặc polish Windows icon
-
-## Signing
-- Dùng KEYSTORE_* secrets cố định để cài đè
+## Sửa
+- `tool/ci_inject_signing.py` hỗ trợ **cả .kts và .gradle**
+- CI fail nếu inject không OK
+- CI fail nếu APK vẫn là "Android Debug" cert
