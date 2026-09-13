@@ -2,5 +2,5 @@
   "version": "0.8.2",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Fix APK signing for Flutter build.gradle.kts — cài đè được"
+  "changelog": "Bản build tự động từ commit c00cfde (v0.8.2)"
 }
