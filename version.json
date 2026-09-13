@@ -1,6 +1,6 @@
 {
-  "version": "0.9.5",
+  "version": "0.9.6",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Firefox-style search menu, advanced adblock, web dark, reader+TTS, TXT bookshelf"
+  "changelog": "Thử GeckoView (toggle) — mặc định Chromium"
 }

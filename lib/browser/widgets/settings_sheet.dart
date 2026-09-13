@@ -8,6 +8,7 @@ import '../services/download_service.dart';
 import '../services/password_service.dart';
 import '../services/search_diversity.dart';
 import '../services/search_engine_service.dart';
+import '../services/engine_preference.dart';
 import '../services/adblock_service.dart';
 import '../services/web_cosmetics_service.dart';
 import '../../reader/reader_settings.dart';
@@ -51,6 +52,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
   void initState() {
     super.initState();
     _diversity = widget.diversityService.index;
+    enginePreference.load().then((_) { if (mounted) setState(() {}); });
     _engineId = searchEngineService.currentId;
     adblockService.load().then((_) { if (mounted) setState(() {}); });
     webCosmeticsService.load().then((_) { if (mounted) setState(() {}); });
@@ -120,9 +122,48 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(
-              'Engine hiện tại: Chromium / WebView2\n'
-              '(Kiến trúc đã chuẩn bị để swap sang GeckoView sau này)',
+              'Engine: ${enginePreference.label}',
               style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
+            ),
+            const SizedBox(height: 8),
+            const Text('Nhân trình duyệt', style: TextStyle(fontWeight: FontWeight.w600)),
+            RadioListTile<BrowserEngineKind>(
+              dense: true,
+              title: const Text('Chromium (ổn định)'),
+              subtitle: const Text('System WebView / WebView2'),
+              value: BrowserEngineKind.chromium,
+              groupValue: enginePreference.kind,
+              onChanged: (v) async {
+                if (v == null) return;
+                await enginePreference.setKind(v);
+                setState(() {});
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đóng app và mở lại để áp dụng nhân')),
+                  );
+                }
+              },
+            ),
+            RadioListTile<BrowserEngineKind>(
+              dense: true,
+              title: const Text('GeckoView (thử nghiệm)'),
+              subtitle: const Text('Android only · plugin 0.0.1 · APK nặng · mở lại app'),
+              value: BrowserEngineKind.gecko,
+              groupValue: enginePreference.kind,
+              onChanged: (v) async {
+                if (v == null) return;
+                await enginePreference.setKind(v);
+                setState(() {});
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Gecko thử nghiệm. Mở lại app. Lỗi → chọn lại Chromium.',
+                      ),
+                    ),
+                  );
+                }
+              },
             ),
             const Divider(height: 32),
 
