@@ -163,8 +163,6 @@ jobs:
           grep -i 'SHA-256' /tmp/cert.txt || true
 
       - name: Đổi tên APK cho dễ nhận diện
-
-      - name: Đổi tên APK cho dễ nhận diện
         run: cp build/app/outputs/flutter-apk/app-release.apk Kinh.apk
 
       - name: Lưu APK làm artifact tạm
