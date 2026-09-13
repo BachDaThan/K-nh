@@ -2,5 +2,5 @@
   "version": "0.8.3",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Backup/Sync local JSON + PROGRESS.md đúng tiến độ thật"
+  "changelog": "Bản build tự động từ commit 054a605 (v0.8.3)"
 }
