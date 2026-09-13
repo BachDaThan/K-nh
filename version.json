@@ -1,6 +1,6 @@
 {
-  "version": "0.8.3",
+  "version": "0.8.4",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 054a605 (v0.8.3)"
+  "changelog": "Splash theme + Windows app_icon.ico trong CI"
 }

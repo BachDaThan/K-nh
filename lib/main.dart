@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/dashboard_screen.dart';
+import 'screens/splash_screen.dart';
 import 'theme/theme_service.dart';
 
 void main() async {
@@ -23,7 +23,7 @@ class KinhApp extends StatelessWidget {
           themeMode: s.themeMode,
           theme: s.buildTheme(Brightness.light),
           darkTheme: s.buildTheme(Brightness.dark),
-          home: const DashboardScreen(),
+          home: const SplashScreen(),
         );
       },
     );

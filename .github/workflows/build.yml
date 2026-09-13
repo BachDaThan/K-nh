@@ -225,6 +225,18 @@ jobs:
           rm -rf windows
           flutter create --platforms=windows --project-name=kinh .
 
+      - name: Áp icon Windows (.ico)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f assets/app_icon.ico ]; then
+            mkdir -p windows/runner/resources
+            cp assets/app_icon.ico windows/runner/resources/app_icon.ico
+            echo "Windows app_icon.ico applied"
+          else
+            echo "No assets/app_icon.ico — giữ icon Flutter mặc định"
+          fi
+
       - name: Tải dependencies
         run: flutter pub get
 
