@@ -15,6 +15,8 @@ import '../theme/theme_service.dart' show themeController;
 import '../live/weather_service.dart';
 import '../live/network_status_service.dart';
 import '../sync/backup_sheet.dart';
+import '../sync/drive_sync_service.dart';
+import '../sync/drive_sync_sheet.dart';
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
 class DashboardScreen extends StatefulWidget {
@@ -30,6 +32,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _appLauncherService = AppLauncherService();
   String? _dashboardNotice;
   List<BentoItem> _pinnedAppItems = [];
+  final _driveSync = DriveSyncService();
   final _weatherService = WeatherService();
   final _networkService = NetworkStatusService();
   String? _weatherSub;
@@ -43,6 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUpdate();
       _checkHotPatch();
+      _driveSync.loadPrefs().then((_) => _driveSync.autoPullIfEnabled());
       _refreshLiveCards();
     });
     _networkService.onChange.listen((_) {
@@ -175,9 +179,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
       size: BentoSize.small,
       accentColor: Color(0xFF64FFDA),
     ),
+    const BentoItem(
+      id: 'drive',
+      title: 'Google Drive',
+      icon: Icons.add_to_drive_outlined,
+      size: BentoSize.small,
+      accentColor: Color(0xFF4285F4),
+    ),
 ];
 
   void _onItemTap(BuildContext context, BentoItem item) {
+    if (item.id == 'drive') {
+      _openDriveSync();
+      return;
+    }
     if (item.id == 'backup') {
       _openBackup();
       return;
@@ -228,6 +243,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
       _networkSub = n.headline;
     });
+  }
+
+
+  void _openDriveSync() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => DriveSyncSheet(service: _driveSync),
+    );
   }
 
   void _openBackup() {

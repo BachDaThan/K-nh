@@ -1,13 +1,14 @@
-# Kính — 0.8.4
+# Kính — 0.9.0
 
-## Mới
-- [x] **Splash screen** theo theme (crystal + glow → Dashboard)
-- [x] **Windows icon** `assets/app_icon.ico` — CI copy vào `windows/runner/resources/`
+## Google Drive Sync
+- [x] OAuth đăng nhập Google (Android/iOS)
+- [x] Chọn file JSON trên Drive (lưu fileId)
+- [x] **Đồng bộ ngay** (thủ công)
+- [x] **Tự động** bật/tắt — mở app → silent pull nếu đã login
+- [x] Đổi / bỏ đường dẫn file
+- [x] Import qua LocalBackupService (theme, DoH, prefs…)
+- Scope: `drive.readonly` — không ghi Drive
+- Windows: Backup JSON thủ công
 
-## Trước đó
-- Bước 1–6, Live cards, Backup JSON, ký APK (gradle.kts)…
-
-## Tiếp theo (tuỳ chọn)
-- Google Drive OAuth
-- Weather theo GPS
-- Ổn định cài đè (keystore base64 đúng)
+## Setup
+Xem `DRIVE_SETUP.md` (Cloud Console + SHA-1 keystore).

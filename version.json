@@ -1,6 +1,6 @@
 {
-  "version": "0.8.4",
+  "version": "0.9.0",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 3284ecc (v0.8.4)"
+  "changelog": "Google Drive: OAuth readonly, chọn file, sync thủ công + tự động"
 }
