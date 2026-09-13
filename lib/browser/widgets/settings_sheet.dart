@@ -8,6 +8,7 @@ import '../services/download_service.dart';
 import '../services/password_service.dart';
 import '../services/search_diversity.dart';
 import '../services/search_engine_service.dart';
+import '../services/adblock_service.dart';
 
 class SettingsSheet extends StatefulWidget {
   final DohService dohService;
@@ -49,6 +50,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
     super.initState();
     _diversity = widget.diversityService.index;
     _engineId = searchEngineService.currentId;
+    adblockService.load().then((_) { if (mounted) setState(() {}); });
     _dohSelectedId = widget.dohService.current.id;
     if (widget.dohService.current.isCustom) {
       _customDohController.text = widget.dohService.current.url;
@@ -239,6 +241,19 @@ class _SettingsSheetState extends State<SettingsSheet> {
 
             const Divider(height: 32),
 
+            SwitchListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Ad-block nhẹ'),
+              subtitle: const Text('Chặn host quảng cáo phổ biến'),
+              value: adblockService.enabled,
+              onChanged: (v) async {
+                await adblockService.setEnabled(v);
+                setState(() {});
+                widget.onChanged();
+              },
+            ),
+            const Divider(height: 20),
             const Text('Máy tìm kiếm (Omnibox)',
                 style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),

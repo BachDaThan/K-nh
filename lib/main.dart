@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'theme/theme_service.dart';
 import 'browser/services/search_engine_service.dart';
+import 'browser/services/adblock_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await themeController.init();
   await searchEngineService.load();
+  await adblockService.load();
   runApp(const KinhApp());
 }
 

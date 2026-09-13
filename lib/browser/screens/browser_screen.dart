@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/adblock_service.dart';
+import '../services/search_engine_service.dart';
 import '../engine/browser_engine.dart';
 import '../engine/chromium_browser_engine.dart';
 import '../models/browser_tab.dart';
@@ -35,6 +37,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
   late final ChromiumBrowserEngine _engine;
   final List<BrowserTab> _tabs = [];
   String? _activeTabId;
+  bool _findVisible = false;
+  final _findCtrl = TextEditingController();
 
   final _bookmarkService = BookmarkService();
   final _dohService = DohService();
@@ -58,6 +62,13 @@ class _BrowserScreenState extends State<BrowserScreen> {
     _engine = ChromiumBrowserEngine();
     _wireEngineCallbacks();
     _initServicesAndFirstTab();
+    adblockService.load();
+    searchEngineService.onEngineChanged = (engine) {
+      final id = _activeTabId;
+      if (id != null) {
+        _loadInTab(id, engine.homeUrl);
+      }
+    };
   }
 
   void _wireEngineCallbacks() {
@@ -173,7 +184,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
     // Mặc định mở trang chủ nếu không có URL — giúp WebView mount + load thật
     final url = (initialUrl != null && initialUrl.isNotEmpty)
         ? initialUrl
-        : 'https://www.google.com';
+        : searchEngineService.current.homeUrl;
     _tabRootUrl[tab.id] = url;
     _tabLeftRoot[tab.id] = false;
     if (incognito) {
@@ -221,6 +232,37 @@ class _BrowserScreenState extends State<BrowserScreen> {
     });
   }
 
+
+  void _toggleFind() {
+    setState(() => _findVisible = !_findVisible);
+    if (!_findVisible) {
+      final id = _activeTabId;
+      if (id != null) {
+        _engine.evaluateJavascript(
+          id,
+          "try { window.getSelection().removeAllRanges(); } catch(e) {}",
+        );
+      }
+    }
+  }
+
+  Future<void> _runFind({bool forward = true}) async {
+    final id = _activeTabId;
+    if (id == null) return;
+    final q = _findCtrl.text
+        .replaceAll(r'\', r'\\')
+        .replaceAll("'", r"\'");
+    final back = forward ? 'false' : 'true';
+    await _engine.evaluateJavascript(
+      id,
+      "(function(){ try { return window.find('$q', false, $back, true, false, false, false); } catch(e) { return false; } })()",
+    );
+  }
+
+  Future<void> _runReader() async {
+    final id = _activeTabId;
+    if (id == null) return;
+    const js = r
   Future<void> _loadInTab(String tabId, String raw) async {
     final tab = _findTab(tabId);
     final looksLikeUrl =
@@ -422,6 +464,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
 
   @override
   void dispose() {
+    _findCtrl.dispose();
     _omniboxController.dispose();
     _engine.dispose();
     super.dispose();
@@ -513,7 +556,73 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     onAddIncognito: () =>
                         _addTab(activate: true, incognito: true),
                   ),
-                  Omnibox(
+                  
+                  if (_findVisible)
+                    Material(
+                      color: Theme.of(context).colorScheme.surface,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _findCtrl,
+                                autofocus: true,
+                                decoration: const InputDecoration(
+                                  hintText: 'Tìm trong trang…',
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                ),
+                                onSubmitted: (_) => _runFind(),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.keyboard_arrow_up),
+                              onPressed: () => _runFind(forward: false),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.keyboard_arrow_down),
+                              onPressed: () => _runFind(forward: true),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: _toggleFind,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  Material(
+                    color: Theme.of(context).colorScheme.surface.withOpacity(0.95),
+                    child: SizedBox(
+                      height: 36,
+                      child: Row(
+                        children: [
+                          IconButton(
+                            tooltip: 'Tìm trong trang',
+                            icon: const Icon(Icons.find_in_page, size: 20),
+                            onPressed: _toggleFind,
+                          ),
+                          IconButton(
+                            tooltip: 'Reader mode',
+                            icon: const Icon(Icons.chrome_reader_mode_outlined, size: 20),
+                            onPressed: _runReader,
+                          ),
+                          const Spacer(),
+                          Text(
+                            'Tìm: ${searchEngineService.current.name}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context).hintColor,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                      ),
+                    ),
+                  ),
+Omnibox(
                     controller: _omniboxController,
                     canGoBack: active?.canGoBack ?? false,
                     canGoForward: active?.canGoForward ?? false,

@@ -1,10 +1,10 @@
-# 0.9.2 — Search engine + Weather IP
+# 0.9.3
 
-Phát hành vẫn bằng **APK / EXE** (GitHub Releases), không bắt buộc Play Store.
+## Search engine
+- Chọn máy tìm kiếm → **tab đang mở chuyển về trang chủ** engine đó
+- Tab mới mở `homeUrl` của engine (không cố định google.com)
+- Omnibox từ khóa → `buildUrl` của engine đã chọn (không gõ trong ô search của trang Google)
 
-## Mới
-- [x] Chọn máy tìm kiếm Omnibox: Google, DuckDuckGo, Bing, Brave, Startpage
-- [x] Thời tiết: ưu tiên vị trí theo **IP** (không xin GPS), fallback TP.HCM
-
-## Trước đó (tóm tắt)
-Browser, DoH pref, AI, OTA, Drive readonly, Backup JSON, Theme, Splash, Privacy URL (tuỳ dùng)…
+## Find / Reader / Adblock
+- Thanh công cụ: Tìm trong trang, Reader mode
+- Ad-block nhẹ: chặn host quảng cáo (bật/tắt trong Cài đặt)

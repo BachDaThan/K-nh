@@ -5,6 +5,7 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import 'browser_engine.dart';
 import '../services/search_engine_service.dart';
+import '../services/adblock_service.dart';
 
 /// Chromium / System WebView (Android) + WebView2 (Windows).
 ///
@@ -55,6 +56,9 @@ class ChromiumBrowserEngine implements BrowserEngine {
             debugPrint('WebView error [$tabId]: ${error.errorCode} ${error.description}');
           },
           onNavigationRequest: (request) {
+            if (adblockService.shouldBlock(request.url)) {
+              return NavigationDecision.prevent;
+            }
             return NavigationDecision.navigate;
           },
         ),
@@ -277,6 +281,74 @@ class ChromiumBrowserEngine implements BrowserEngine {
   }
 
   @override
+
+  Future<bool> findInPage(String tabId, String query, {bool forward = true}) async {
+    final c = _controllers[tabId];
+    if (c == null || query.trim().isEmpty) return false;
+    final escaped = query
+        .replaceAll(r'\\', r'\\\\')
+        .replaceAll("'", r"\\'");
+    final back = forward ? 'false' : 'true';
+    final js = "(function(){ try { return window.find('" +
+        escaped +
+        "', false, " +
+        back +
+        ", true, false, false, false); } catch(e) { return false; } })()";
+    final result = await c.runJavaScriptReturningResult(js);
+    return result == true || result.toString() == 'true';
+  }
+
+  Future<void> clearFind(String tabId) async {
+    final c = _controllers[tabId];
+    if (c == null) return;
+    await c.runJavaScript(
+      "try { window.getSelection().removeAllRanges(); } catch(e) {}",
+    );
+  }
+
+  Future<void> enableReaderMode(String tabId) async {
+    final c = _controllers[tabId];
+    if (c == null) return;
+    const js = r'''
+(function(){
+  if (document.getElementById('kinh-reader-root')) return;
+  var article = document.querySelector('article') || document.querySelector('[role=main]') || document.body;
+  var title = document.title || '';
+  var paras = Array.from(article.querySelectorAll('p, h1, h2, h3, li'))
+    .map(function(el){ return el.innerText.trim(); })
+    .filter(function(t){ return t.length > 40; })
+    .slice(0, 80);
+  if (paras.length < 2) {
+    paras = [article.innerText.slice(0, 12000)];
+  }
+  var root = document.createElement('div');
+  root.id = 'kinh-reader-root';
+  root.setAttribute('style',
+    'position:fixed;inset:0;z-index:2147483647;overflow:auto;' +
+    'background:#121212;color:#e8e8e8;padding:24px 18px 48px;' +
+    'font:18px/1.65 Georgia,serif;');
+  var h = document.createElement('h1');
+  h.textContent = title;
+  h.style.cssText = 'font-size:1.4rem;margin:0 0 12px;color:#fff;';
+  root.appendChild(h);
+  var bar = document.createElement('button');
+  bar.textContent = 'Dong Reader';
+  bar.style.cssText = 'margin-bottom:16px;padding:8px 12px;border-radius:8px;border:0;background:#6C8CFF;color:#fff;';
+  bar.onclick = function(){ root.remove(); };
+  root.appendChild(bar);
+  paras.forEach(function(t){
+    var p = document.createElement('p');
+    p.textContent = t;
+    p.style.margin = '0 0 1em';
+    root.appendChild(p);
+  });
+  document.documentElement.appendChild(root);
+})();
+
+''';
+    await c.runJavaScript(js);
+  }
+
   Future<void> disposeTab(String tabId) async {
     _controllers.remove(tabId);
     _zoomLevels.remove(tabId);
