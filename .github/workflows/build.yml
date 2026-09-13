@@ -97,15 +97,13 @@ jobs:
           grep -E 'uses-permission' "$MANIFEST" || true
 
 
-      - name: Ép compileSdk 36 (app + mọi plugin Android)
+      - name: Ép compileSdk 36 (app + plugins)
         shell: bash
         run: |
           set -euo pipefail
           python3 tool/ci_force_compile_sdk.py
-          echo "=== verify app gradle ==="
-          grep -n 'compileSdk\|targetSdk' android/app/build.gradle.kts android/app/build.gradle 2>/dev/null || true
-          echo "=== gradle.properties flutter sdk ==="
-          grep -n 'compileSdk\|targetSdk' android/gradle.properties || true
+          grep -n 'compileSdk' android/app/build.gradle.kts android/app/build.gradle 2>/dev/null || true
+          grep 'flutter.compileSdkVersion' android/gradle.properties || true
 
       - name: Tải dependencies
         run: flutter pub get
