@@ -14,6 +14,7 @@ import '../theme/theme_settings_sheet.dart';
 import '../theme/theme_service.dart' show themeController;
 import '../live/weather_service.dart';
 import '../live/network_status_service.dart';
+import '../sync/backup_sheet.dart';
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
 class DashboardScreen extends StatefulWidget {
@@ -167,9 +168,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
       icon: Icons.add_circle_outline_rounded,
       size: BentoSize.small,
     ),
-  ];
+      const BentoItem(
+      id: 'backup',
+      title: 'Backup / Sync',
+      icon: Icons.cloud_sync_outlined,
+      size: BentoSize.small,
+      accentColor: Color(0xFF64FFDA),
+    ),
+];
 
   void _onItemTap(BuildContext context, BentoItem item) {
+    if (item.id == 'backup') {
+      _openBackup();
+      return;
+    }
     if (item.id == 'weather' || item.id == 'wifi') {
       _refreshLiveCards();
       return;
@@ -218,7 +230,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  void _openBackup() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => const BackupSheet(),
+    );
+  }
+
   void _openThemeSettings() {
+
 
     showModalBottomSheet(
       context: context,
