@@ -2,5 +2,5 @@
   "version": "0.9.3",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Search engine đổi trang chủ tab + Find-in-page + Reader + ad-block nhẹ"
+  "changelog": "Bản build tự động từ commit c51edf1 (v0.9.3)"
 }
