@@ -1,11 +1,10 @@
-# 0.9.1 — Privacy Policy
+# 0.9.2 — Search engine + Weather IP
 
-## Play Store
-- [x] `docs/privacy-policy.html` — URL công khai
-- [x] Link in-app (Dashboard + Cài đặt trình duyệt)
-- URL: https://bachdathan.github.io/K-nh/privacy-policy.html
-- **Bạn cần bật GitHub Pages**: repo Settings → Pages → Branch `main` → folder `/docs`
+Phát hành vẫn bằng **APK / EXE** (GitHub Releases), không bắt buộc Play Store.
 
-## Tiếp theo
-- Data safety form trên Play Console (điền theo nội dung policy)
-- Ổn định ký APK / cài đè
+## Mới
+- [x] Chọn máy tìm kiếm Omnibox: Google, DuckDuckGo, Bing, Brave, Startpage
+- [x] Thời tiết: ưu tiên vị trí theo **IP** (không xin GPS), fallback TP.HCM
+
+## Trước đó (tóm tắt)
+Browser, DoH pref, AI, OTA, Drive readonly, Backup JSON, Theme, Splash, Privacy URL (tuỳ dùng)…

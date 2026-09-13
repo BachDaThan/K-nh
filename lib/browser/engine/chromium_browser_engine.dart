@@ -4,6 +4,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import 'browser_engine.dart';
+import '../services/search_engine_service.dart';
 
 /// Chromium / System WebView (Android) + WebView2 (Windows).
 ///
@@ -148,7 +149,7 @@ class ChromiumBrowserEngine implements BrowserEngine {
     final looksLikeUrl = target.contains('://') ||
         (target.contains('.') && !target.contains(' '));
     if (!looksLikeUrl) {
-      return 'https://www.google.com/search?q=${Uri.encodeComponent(target)}';
+      return searchEngineService.searchUrl(target);
     }
     if (!target.contains('://')) {
       target = 'https://$target';

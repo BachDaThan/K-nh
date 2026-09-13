@@ -7,6 +7,7 @@ import '../../legal/legal_urls.dart';
 import '../services/download_service.dart';
 import '../services/password_service.dart';
 import '../services/search_diversity.dart';
+import '../services/search_engine_service.dart';
 
 class SettingsSheet extends StatefulWidget {
   final DohService dohService;
@@ -38,6 +39,7 @@ class SettingsSheet extends StatefulWidget {
 
 class _SettingsSheetState extends State<SettingsSheet> {
   late double _diversity;
+  late String _engineId;
   final _customDohController = TextEditingController();
 
   late String _dohSelectedId;
@@ -46,6 +48,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
   void initState() {
     super.initState();
     _diversity = widget.diversityService.index;
+    _engineId = searchEngineService.currentId;
     _dohSelectedId = widget.dohService.current.id;
     if (widget.dohService.current.isCustom) {
       _customDohController.text = widget.dohService.current.url;
@@ -236,7 +239,27 @@ class _SettingsSheetState extends State<SettingsSheet> {
 
             const Divider(height: 32),
 
+            const Text('Máy tìm kiếm (Omnibox)',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            ...SearchEngineService.engines.map((e) {
+              return RadioListTile<String>(
+                dense: true,
+                title: Text(e.name, style: const TextStyle(fontSize: 14)),
+                value: e.id,
+                groupValue: _engineId,
+                onChanged: (v) async {
+                  if (v == null) return;
+                  setState(() => _engineId = v);
+                  await searchEngineService.setEngine(v);
+                  widget.onChanged();
+                },
+              );
+            }),
+            const Divider(height: 24),
+
             // Search Diversity
+
             Text(
               'Độ sáng tạo Search: ${widget.diversityService.label} '
               '(${_diversity.toStringAsFixed(2)})',
