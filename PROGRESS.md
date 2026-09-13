@@ -1,14 +1,11 @@
-# Kính — 0.9.0
+# 0.9.1 — Privacy Policy
 
-## Google Drive Sync
-- [x] OAuth đăng nhập Google (Android/iOS)
-- [x] Chọn file JSON trên Drive (lưu fileId)
-- [x] **Đồng bộ ngay** (thủ công)
-- [x] **Tự động** bật/tắt — mở app → silent pull nếu đã login
-- [x] Đổi / bỏ đường dẫn file
-- [x] Import qua LocalBackupService (theme, DoH, prefs…)
-- Scope: `drive.readonly` — không ghi Drive
-- Windows: Backup JSON thủ công
+## Play Store
+- [x] `docs/privacy-policy.html` — URL công khai
+- [x] Link in-app (Dashboard + Cài đặt trình duyệt)
+- URL: https://bachdathan.github.io/K-nh/privacy-policy.html
+- **Bạn cần bật GitHub Pages**: repo Settings → Pages → Branch `main` → folder `/docs`
 
-## Setup
-Xem `DRIVE_SETUP.md` (Cloud Console + SHA-1 keystore).
+## Tiếp theo
+- Data safety form trên Play Console (điền theo nội dung policy)
+- Ổn định ký APK / cài đè

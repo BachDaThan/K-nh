@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/bento_item.dart';
 import '../widgets/bento_card.dart';
@@ -17,6 +18,7 @@ import '../live/network_status_service.dart';
 import '../sync/backup_sheet.dart';
 import '../sync/drive_sync_service.dart';
 import '../sync/drive_sync_sheet.dart';
+import '../legal/legal_urls.dart';
 
 /// Trang Dashboard trung tâm — tab cố định đầu tiên.
 class DashboardScreen extends StatefulWidget {
@@ -186,9 +188,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       size: BentoSize.small,
       accentColor: Color(0xFF4285F4),
     ),
+    const BentoItem(
+      id: 'privacy_policy',
+      title: 'Privacy Policy',
+      icon: Icons.privacy_tip_outlined,
+      size: BentoSize.small,
+      accentColor: Color(0xFF9E9E9E),
+    ),
 ];
 
   void _onItemTap(BuildContext context, BentoItem item) {
+    if (item.id == 'privacy_policy') {
+      final uri = Uri.parse(LegalUrls.privacyPolicy);
+      launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
     if (item.id == 'drive') {
       _openDriveSync();
       return;

@@ -1,6 +1,6 @@
 {
-  "version": "0.9.0",
+  "version": "0.9.1",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 4a9dcc1 (v0.9.0)"
+  "changelog": "Privacy Policy (Play Store) + link in-app"
 }

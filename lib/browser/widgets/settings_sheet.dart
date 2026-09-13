@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../engine/browser_engine.dart';
 import '../models/doh_provider.dart';
 import '../services/doh_service.dart';
+import '../../legal/legal_urls.dart';
 import '../services/download_service.dart';
 import '../services/password_service.dart';
 import '../services/search_diversity.dart';
@@ -320,6 +322,23 @@ class _SettingsSheetState extends State<SettingsSheet> {
                   'Mật khẩu đã lưu (${widget.passwordService.items.length})'),
               onTap: () {
                 // Có thể mở màn hình quản lý mật khẩu chi tiết sau.
+              },
+            ),
+
+            const Divider(height: 32),
+            const Text('Pháp lý', style: TextStyle(fontWeight: FontWeight.w600)),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.privacy_tip_outlined, size: 20),
+              title: const Text('Chính sách quyền riêng tư'),
+              subtitle: const Text('Bắt buộc khi đăng Play Store',
+                  style: TextStyle(fontSize: 11)),
+              onTap: () async {
+                final uri = Uri.parse(LegalUrls.privacyPolicy);
+                if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                  await launchUrl(Uri.parse(LegalUrls.privacyPolicyFallback),
+                      mode: LaunchMode.externalApplication);
+                }
               },
             ),
           ],

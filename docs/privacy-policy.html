@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Chính sách quyền riêng tư — Kính</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, sans-serif; line-height: 1.55; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    h1,h2 { line-height: 1.25; }
+    .muted { opacity: 0.75; font-size: 0.95rem; }
+    ul { padding-left: 1.2rem; }
+    a { color: #6C8CFF; }
+  </style>
+</head>
+<body>
+  <h1>Chính sách quyền riêng tư — ứng dụng Kính</h1>
+  <p class="muted">Cập nhật: 13/09/2026 · Nhà phát triển: BachDaThan · Package: <code>com.bachdathan.kinh</code></p>
+
+  <p>
+    Ứng dụng <strong>Kính</strong> (“ứng dụng”) là trình duyệt / dashboard chạy chủ yếu trên thiết bị của bạn.
+    Chính sách này mô tả dữ liệu nào được xử lý, mục đích và quyền của bạn.
+  </p>
+
+  <h2>1. Tóm tắt</h2>
+  <ul>
+    <li>Không vận hành máy chủ riêng để thu thập hồ sơ người dùng.</li>
+    <li>Hầu hết dữ liệu (cài đặt, bookmark, theme, lịch sử cục bộ…) lưu <strong>trên máy bạn</strong>.</li>
+    <li>Một số tính năng tùy chọn dùng dịch vụ bên thứ ba (Google Đăng nhập / Google Drive chỉ đọc, Open-Meteo thời tiết, CDN tải tài nguyên).</li>
+    <li>Không bán dữ liệu cá nhân.</li>
+  </ul>
+
+  <h2>2. Dữ liệu xử lý trên thiết bị</h2>
+  <ul>
+    <li>Cài đặt ứng dụng (giao diện, DoH preference, v.v.).</li>
+    <li>Bookmark, lịch sử duyệt, nhật ký hoạt động (nếu bạn dùng các tính năng đó).</li>
+    <li>API key AI (nếu bạn nhập) — lưu bằng cơ chế bảo mật của hệ thống (Android Keystore / tương đương), không gửi lên server của nhà phát triển.</li>
+    <li>Danh sách app đã ghim (Android) — chỉ để mở lối tắt bạn chọn.</li>
+  </ul>
+  <p>Bạn có thể xóa dữ liệu bằng cách xóa dữ liệu ứng dụng hoặc gỡ cài đặt.</p>
+
+  <h2>3. Trình duyệt (WebView)</h2>
+  <p>
+    Khi bạn truy cập website, nội dung và cookie do trang đó và engine WebView xử lý theo hành vi duyệt web thông thường.
+    Nhà phát triển Kính không vận hành proxy trung gian để ghi lại toàn bộ lưu lượng duyệt của bạn.
+  </p>
+
+  <h2>4. Google Đăng nhập &amp; Google Drive (tùy chọn)</h2>
+  <p>
+    Chỉ khi bạn bật tính năng đồng bộ Drive và đăng nhập Google:
+  </p>
+  <ul>
+    <li>Ứng dụng yêu cầu quyền đọc Drive (readonly) để tải file JSON backup <strong>bạn đã chọn</strong>.</li>
+    <li>Không dùng quyền ghi Drive trong phiên bản hiện tại.</li>
+    <li>Việc xử lý tài khoản Google tuân theo chính sách của Google. Bạn có thể thu hồi quyền trong tài khoản Google.</li>
+  </ul>
+
+  <h2>5. Dịch vụ mạng khác</h2>
+  <ul>
+    <li><strong>Open-Meteo</strong>: lấy thời tiết (mặc định khu vực cấu hình sẵn; không bắt buộc chia sẻ danh tính).</li>
+    <li><strong>CDN / GitHub</strong>: kiểm tra phiên bản cập nhật (<code>version.json</code>), tải gói cài đặt khi bạn xác nhận.</li>
+    <li><strong>Pyodide / CDN script</strong>: chỉ khi bạn chạy code trong AI Builder (tải runtime về WebView).</li>
+  </ul>
+
+  <h2>6. Quyền hệ thống (Android)</h2>
+  <ul>
+    <li>Internet — duyệt web, cập nhật, thời tiết, Drive (nếu dùng).</li>
+    <li>Trạng thái mạng — hiển thị Wi‑Fi / dữ liệu trên thẻ.</li>
+    <li>Query installed apps — chỉ khi dùng App Launcher / ghim app.</li>
+  </ul>
+
+  <h2>7. Trẻ em</h2>
+  <p>Ứng dụng không nhắm đối tượng dưới 13 tuổi và không cố ý thu thập dữ liệu trẻ em.</p>
+
+  <h2>8. Bảo mật</h2>
+  <p>
+    Áp dụng biện pháp hợp lý trên thiết bị (ví dụ lưu khóa API bằng secure storage).
+    Không phương thức nào an toàn tuyệt đối; hãy bảo vệ máy và tài khoản Google của bạn.
+  </p>
+
+  <h2>9. Thay đổi chính sách</h2>
+  <p>Có thể cập nhật chính sách này; ngày “Cập nhật” ở đầu trang sẽ thay đổi. Bản mới nhất luôn tại URL này.</p>
+
+  <h2>10. Liên hệ</h2>
+  <p>
+    Câu hỏi về quyền riêng tư: mở issue trên repo
+    <a href="https://github.com/BachDaThan/K-nh">github.com/BachDaThan/K-nh</a>
+    hoặc liên hệ qua trang GitHub của nhà phát triển <strong>BachDaThan</strong>.
+  </p>
+
+  <hr/>
+  <h2 id="en">Privacy Policy (English summary)</h2>
+  <p>
+    <strong>Kính</strong> processes most data on-device only. Optional Google Sign-In / Drive read-only is used solely when you enable Drive sync and pick a file.
+    We do not run a private backend to profile you and do not sell personal data. Third parties (Google, Open-Meteo, GitHub/CDN) process data under their own terms when those features are used.
+    Contact: GitHub repository <a href="https://github.com/BachDaThan/K-nh">BachDaThan/K-nh</a>.
+  </p>
+</body>
+</html>
