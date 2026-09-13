@@ -2,5 +2,5 @@
   "version": "0.9.8",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "file_picker ^11.0.3 + force compileSdk 36"
+  "changelog": "Fix FilePicker API (no .platform) for file_picker 11+"
 }

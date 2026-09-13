@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'bookshelf_service.dart';
 import 'txt_reader_screen.dart';
@@ -20,15 +23,39 @@ class _BookshelfScreenState extends State<BookshelfScreen> {
   }
 
   Future<void> _import() async {
-    final r = await FilePicker.platform.pickFiles(
+    // file_picker ≥11: không còn FilePicker.platform — dùng static pickFiles
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['txt'],
+      allowedExtensions: const ['txt'],
+      allowMultiple: false,
     );
-    if (r == null || r.files.isEmpty) return;
-    final f = r.files.single;
-    if (f.path == null) return;
-    await bookshelfService.importTxtFile(f.path!, f.name);
-    setState(() {});
+    if (result == null) return;
+
+    // v11: FilePickerResult; một số bản trả files qua .files
+    final files = result.files;
+    if (files.isEmpty) return;
+    final f = files.first;
+
+    String? path = f.path;
+    // Windows/Android: path thường có; nếu null thì ghi tạm từ bytes
+    if (path == null || path.isEmpty) {
+      final bytes = f.bytes;
+      if (bytes == null || bytes.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không đọc được file')),
+          );
+        }
+        return;
+      }
+      final dir = Directory.systemTemp;
+      final tmp = File('${dir.path}/kinh_import_${f.name}');
+      await tmp.writeAsBytes(bytes, flush: true);
+      path = tmp.path;
+    }
+
+    await bookshelfService.importTxtFile(path, f.name);
+    if (mounted) setState(() {});
   }
 
   @override
