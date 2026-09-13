@@ -1,12 +1,4 @@
-# 0.9.8 — Hai bản song song
+# Fix compileSdk 36
 
-## Bản gốc (giữ nguyên)
-- `Kinh.apk` — `com.bachdathan.kinh`
-- `Kinh-Windows.zip`
-
-## Bản A / Plus (thêm)
-- `Kinh-Plus.apk` — `com.bachdathan.kinh.plus` (cài cạnh bản gốc)
-- `Kinh-Plus-Windows.zip`
-- Thẻ **Tiện ích giả**: User CSS, User JS, tải filter host list
-
-Không phải Firefox extension store. Cùng repo, `--dart-define=KINH_EDITION=plus`.
+`file_picker` → `flutter_plugin_android_lifecycle` đòi compileSdk ≥ 36.
+CI sau `flutter create` ép `compileSdk = 36` trong `android/app/build.gradle.kts`.
