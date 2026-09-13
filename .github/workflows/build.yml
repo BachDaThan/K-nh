@@ -96,9 +96,6 @@ jobs:
           echo "=== AndroidManifest permissions ==="
           grep -E 'uses-permission' "$MANIFEST" || true
 
-      - name: Thêm Maven Mozilla (GeckoView)
-        run: python3 tool/ci_inject_mozilla_maven.py
-
       - name: Tải dependencies
         run: flutter pub get
 

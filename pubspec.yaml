@@ -2,7 +2,7 @@ name: kinh
 description: "Kính - Trình duyệt Dashboard All-in-One, minh bạch và riêng tư."
 publish_to: 'none'
 
-version: 0.9.6+25
+version: 0.9.7+26
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -13,7 +13,6 @@ dependencies:
   cupertino_icons: ^1.0.6
   webview_flutter: ^4.10.0
   webview_flutter_android: ^4.3.0
-  webview_flutter_geckoview: ^0.0.1+2
   webview_win_floating: ^3.0.0
   shared_preferences: ^2.3.3
   path_provider: ^2.1.4

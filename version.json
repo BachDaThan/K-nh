@@ -1,6 +1,6 @@
 {
-  "version": "0.9.6",
+  "version": "0.9.7",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Thử GeckoView (toggle) — mặc định Chromium"
+  "changelog": "Gỡ GeckoView trial (xung đột webview_flutter) — về Chromium ổn định"
 }
