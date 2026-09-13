@@ -2,5 +2,5 @@
   "version": "0.9.8",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Fix FilePicker API (no .platform) for file_picker 11+"
+  "changelog": "Pin file_picker 10.3.10 (11.x missing FilePickerPlugin on Android)"
 }

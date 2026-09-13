@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'bookshelf_service.dart';
 import 'txt_reader_screen.dart';
@@ -23,21 +22,17 @@ class _BookshelfScreenState extends State<BookshelfScreen> {
   }
 
   Future<void> _import() async {
-    // file_picker ≥11: không còn FilePicker.platform — dùng static pickFiles
-    final result = await FilePicker.pickFiles(
+    // file_picker 10.3.10: FilePicker.platform.pickFiles
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['txt'],
       allowMultiple: false,
     );
-    if (result == null) return;
+    if (result == null || result.files.isEmpty) return;
 
-    // v11: FilePickerResult; một số bản trả files qua .files
-    final files = result.files;
-    if (files.isEmpty) return;
-    final f = files.first;
-
+    final f = result.files.first;
     String? path = f.path;
-    // Windows/Android: path thường có; nếu null thì ghi tạm từ bytes
+
     if (path == null || path.isEmpty) {
       final bytes = f.bytes;
       if (bytes == null || bytes.isEmpty) {
@@ -48,8 +43,7 @@ class _BookshelfScreenState extends State<BookshelfScreen> {
         }
         return;
       }
-      final dir = Directory.systemTemp;
-      final tmp = File('${dir.path}/kinh_import_${f.name}');
+      final tmp = File('${Directory.systemTemp.path}/kinh_import_${f.name}');
       await tmp.writeAsBytes(bytes, flush: true);
       path = tmp.path;
     }
