@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../reader/bookshelf_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/bento_item.dart';
@@ -195,12 +196,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       size: BentoSize.small,
       accentColor: Color(0xFF9E9E9E),
     ),
+    const BentoItem(
+      id: 'bookshelf',
+      title: 'Tủ sách',
+      icon: Icons.menu_book_outlined,
+      size: BentoSize.small,
+      accentColor: Color(0xFFFFB74D),
+    ),
 ];
 
   void _onItemTap(BuildContext context, BentoItem item) {
     if (item.id == 'privacy_policy') {
       final uri = Uri.parse(LegalUrls.privacyPolicy);
       launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    if (item.id == 'bookshelf') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const BookshelfScreen()),
+      );
       return;
     }
     if (item.id == 'drive') {

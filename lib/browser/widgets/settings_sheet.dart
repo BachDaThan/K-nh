@@ -9,6 +9,8 @@ import '../services/password_service.dart';
 import '../services/search_diversity.dart';
 import '../services/search_engine_service.dart';
 import '../services/adblock_service.dart';
+import '../services/web_cosmetics_service.dart';
+import '../../reader/reader_settings.dart';
 
 class SettingsSheet extends StatefulWidget {
   final DohService dohService;
@@ -51,6 +53,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
     _diversity = widget.diversityService.index;
     _engineId = searchEngineService.currentId;
     adblockService.load().then((_) { if (mounted) setState(() {}); });
+    webCosmeticsService.load().then((_) { if (mounted) setState(() {}); });
+    readerSettings.load().then((_) { if (mounted) setState(() {}); });
     _dohSelectedId = widget.dohService.current.id;
     if (widget.dohService.current.isCustom) {
       _customDohController.text = widget.dohService.current.url;
@@ -251,6 +255,52 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 await adblockService.setEnabled(v);
                 setState(() {});
                 widget.onChanged();
+              },
+            ),
+            SwitchListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Ad-block nâng cao'),
+              subtitle: const Text('Thêm tracker + ẩn CSS quảng cáo'),
+              value: webCosmeticsService.advancedAdblock,
+              onChanged: (v) async {
+                await webCosmeticsService.setAdvancedAdblock(v);
+                setState(() {});
+                widget.onChanged();
+              },
+            ),
+            SwitchListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Tối trang web (Dark)'),
+              value: webCosmeticsService.webDarkMode,
+              onChanged: (v) async {
+                await webCosmeticsService.setWebDarkMode(v);
+                setState(() {});
+                widget.onChanged();
+              },
+            ),
+            SwitchListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('TTS khi mở Reader'),
+              value: readerSettings.ttsEnabled,
+              onChanged: (v) async {
+                readerSettings.ttsEnabled = v;
+                await readerSettings.save();
+                setState(() {});
+              },
+            ),
+            SwitchListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('TTS tự sang chương sau'),
+              subtitle: const Text('Hết đoạn → tìm link Next / Chương sau'),
+              value: readerSettings.ttsAutoNext,
+              onChanged: (v) async {
+                readerSettings.ttsAutoNext = v;
+                await readerSettings.save();
+                setState(() {});
               },
             ),
             const Divider(height: 20),

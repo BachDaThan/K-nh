@@ -1,10 +1,15 @@
-# 0.9.3
+# 0.9.5 — Reader / Adblock / Search UI
 
-## Search engine
-- Chọn máy tìm kiếm → **tab đang mở chuyển về trang chủ** engine đó
-- Tab mới mở `homeUrl` của engine (không cố định google.com)
-- Omnibox từ khóa → `buildUrl` của engine đã chọn (không gõ trong ô search của trang Google)
+## Có
+- Dropdown máy tìm kiếm kiểu Firefox trên Omnibox
+- Ad-block nhẹ + **nâng cao** (tracker + CSS ẩn)
+- Dark mode trang web (CSS)
+- Reader web (nền/chữ theo cài đặt) + **TTS bật/tắt** + **tự chương sau**
+- Tủ sách **TXT** offline (tiến độ, cỡ chữ, nền)
 
-## Find / Reader / Adblock
-- Thanh công cụ: Tìm trong trang, Reader mode
-- Ad-block nhẹ: chặn host quảng cáo (bật/tắt trong Cài đặt)
+## Không làm được trên System WebView
+- Cài **tiện ích Firefox thật** (uBlock…): chỉ GeckoView mới gần được
+- EPUB/PDF đầy đủ: bản này TXT trước; EPUB có thể thêm sau
+
+## Gemini wishlist
+- EPUB/PDF, Drive sync tủ sách: backlog

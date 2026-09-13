@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../services/web_cosmetics_service.dart';
+import '../../reader/reader_settings.dart';
+import '../../reader/web_reader_js.dart';
+import '../../reader/tts_service.dart';
 import '../services/adblock_service.dart';
 import '../services/search_engine_service.dart';
 import '../engine/browser_engine.dart';
@@ -63,6 +67,8 @@ class _BrowserScreenState extends State<BrowserScreen> {
     _wireEngineCallbacks();
     _initServicesAndFirstTab();
     adblockService.load();
+    webCosmeticsService.load();
+    readerSettings.load();
     searchEngineService.onEngineChanged = (engine) {
       final id = _activeTabId;
       if (id != null) {
@@ -97,19 +103,13 @@ class _BrowserScreenState extends State<BrowserScreen> {
       if (t != null && mounted) setState(() => t.progress = progress);
     };
     _engine.onLoadingChanged = (tabId, loading) {
-      final tab = _findTab(tabId);
-      if (tab != null && mounted) setState(() => tab.isLoading = loading);
-      // Khi load xong: ghi lịch sử (nếu không ẩn danh)
-      if (!loading && tab != null && !tab.isIncognito) {
-        final u = tab.url;
-        if (u.isNotEmpty && u != 'about:blank') {
-          _historyService.add(title: tab.title, url: u);
-          _activityLog.log(
-            kind: ActivityKind.pageFinished,
-            message: 'Tải xong: ${tab.title.isEmpty ? u : tab.title}',
-            url: u,
-          );
-        }
+      final t = _findTab(tabId);
+      if (t != null) {
+        t.isLoading = loading;
+        if (mounted) setState(() {});
+      }
+      if (!loading) {
+        _injectCosmetics(tabId);
       }
     };
     _engine.onNavStateChanged = (tabId, back, forward) {
@@ -262,41 +262,40 @@ class _BrowserScreenState extends State<BrowserScreen> {
   Future<void> _runReader() async {
     final id = _activeTabId;
     if (id == null) return;
-    const js = r'''(function(){
-  if (document.getElementById('kinh-reader-root')) return;
-  var article = document.querySelector('article') || document.querySelector('[role=main]') || document.body;
-  var title = document.title || '';
-  var paras = Array.from(article.querySelectorAll('p, h1, h2, h3, li'))
-    .map(function(el){ return el.innerText.trim(); })
-    .filter(function(t){ return t.length > 40; })
-    .slice(0, 80);
-  if (paras.length < 2) {
-    paras = [article.innerText.slice(0, 12000)];
-  }
-  var root = document.createElement('div');
-  root.id = 'kinh-reader-root';
-  root.setAttribute('style',
-    'position:fixed;inset:0;z-index:2147483647;overflow:auto;' +
-    'background:#121212;color:#e8e8e8;padding:24px 18px 48px;' +
-    'font:18px/1.65 Georgia,serif;');
-  var h = document.createElement('h1');
-  h.textContent = title;
-  h.style.cssText = 'font-size:1.4rem;margin:0 0 12px;color:#fff;';
-  root.appendChild(h);
-  var bar = document.createElement('button');
-  bar.textContent = 'Dong Reader';
-  bar.style.cssText = 'margin-bottom:16px;padding:8px 12px;border-radius:8px;border:0;background:#6C8CFF;color:#fff;';
-  bar.onclick = function(){ root.remove(); };
-  root.appendChild(bar);
-  paras.forEach(function(t){
-    var p = document.createElement('p');
-    p.textContent = t;
-    p.style.margin = '0 0 1em';
-    root.appendChild(p);
-  });
-  document.documentElement.appendChild(root);
-})();''';
+    await readerSettings.load();
+    final js = buildWebReaderJs();
     await _engine.evaluateJavascript(id, js);
+    if (readerSettings.ttsEnabled) {
+      try {
+        final text = await _engine.evaluateJavascript(
+          id,
+          'window.__kinhReaderText || ""',
+        );
+        final s = text?.toString() ?? '';
+        if (s.isNotEmpty) {
+          ttsService.onComplete = () {
+            if (readerSettings.ttsAutoNext) _ttsAutoNextChapter();
+          };
+          await ttsService.speak(s);
+        }
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _ttsAutoNextChapter() async {
+    final id = _activeTabId;
+    if (id == null) return;
+    try {
+      final href = await _engine.evaluateJavascript(id, findNextChapterJs);
+      final url = href?.toString() ?? '';
+      if (url.startsWith('http')) {
+        await _loadInTab(id, url);
+        Future.delayed(const Duration(milliseconds: 1800), () async {
+          if (!mounted) return;
+          await _runReader();
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadInTab(String tabId, String raw) async {
@@ -645,6 +644,40 @@ class _BrowserScreenState extends State<BrowserScreen> {
                             icon: const Icon(Icons.chrome_reader_mode_outlined, size: 20),
                             onPressed: _runReader,
                           ),
+                          IconButton(
+                            tooltip: 'Tối trang web',
+                            icon: Icon(
+                              webCosmeticsService.webDarkMode
+                                  ? Icons.dark_mode
+                                  : Icons.dark_mode_outlined,
+                              size: 20,
+                            ),
+                            onPressed: () async {
+                              await webCosmeticsService.setWebDarkMode(
+                                  !webCosmeticsService.webDarkMode);
+                              setState(() {});
+                              final id = _activeTabId;
+                              if (id != null) await _injectCosmetics(id);
+                            },
+                          ),
+                          IconButton(
+                            tooltip: 'TTS web',
+                            icon: Icon(
+                              readerSettings.ttsEnabled
+                                  ? Icons.record_voice_over
+                                  : Icons.voice_over_off_outlined,
+                              size: 20,
+                            ),
+                            onPressed: () async {
+                              readerSettings.ttsEnabled =
+                                  !readerSettings.ttsEnabled;
+                              await readerSettings.save();
+                              setState(() {});
+                              if (!readerSettings.ttsEnabled) {
+                                await ttsService.stop();
+                              }
+                            },
+                          ),
                           const Spacer(),
                           Text(
                             'Tìm: ${searchEngineService.current.name}',
@@ -677,6 +710,13 @@ Omnibox(
                             : _engine.reload(active.id))
                         : null,
                     onSubmit: _onOmniboxSubmit,
+                    onEngineChanged: () {
+                      setState(() {});
+                      final id = _activeTabId;
+                      if (id != null) {
+                        _loadInTab(id, searchEngineService.current.homeUrl);
+                      }
+                    },
                     onToggleBookmark: _toggleBookmark,
                     onOpenSettings: _openSettings,
                     onOpenDownloads: _openDownloadsSheet,

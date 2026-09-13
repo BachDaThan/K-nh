@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'web_cosmetics_service.dart';
 
 class AdblockService {
   static const _key = 'kinh_adblock_enabled';
@@ -26,6 +27,24 @@ class AdblockService {
     'openx.net',
     'moatads.com',
     'googletagservices.com',
+    'media.net',
+    'adsafeprotected.com',
+    'yieldmo.com',
+    'casalemedia.com',
+    '2mdn.net',
+  };
+
+  static const advancedExtraHosts = <String>{
+    'facebook.com/tr',
+    'connect.facebook.net',
+    'hotjar.com',
+    'clarity.ms',
+    'quantserve.com',
+    'exelator.com',
+    'bluekai.com',
+    'bidswitch.net',
+    'sharethrough.com',
+    'liadm.com',
   };
 
   Future<void> load() async {
@@ -43,7 +62,6 @@ class AdblockService {
     if (!enabled) return false;
     final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
     if (host.isEmpty) return false;
-    // never block main search engines
     const allow = {
       'www.google.com',
       'google.com',
@@ -55,6 +73,11 @@ class AdblockService {
     if (allow.contains(host)) return false;
     for (final b in blockedHosts) {
       if (host == b || host.endsWith('.$b')) return true;
+    }
+    if (webCosmeticsService.advancedAdblock) {
+      for (final b in advancedExtraHosts) {
+        if (host == b || host.endsWith('.$b') || url.contains(b)) return true;
+      }
     }
     return false;
   }
