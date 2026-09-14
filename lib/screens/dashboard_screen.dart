@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'faq_screen.dart';
+import '../services/sos_service.dart';
+import '../screens/community_setup_sheet.dart';
+import '../screens/data_export_sheet.dart';
 import '../config/app_edition.dart';
 import '../addons/addon_sheet.dart';
 import '../reader/bookshelf_screen.dart';
@@ -173,6 +177,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
       size: BentoSize.small,
     ),
     const BentoItem(
+      id: 'data_export',
+      title: 'Xuất dữ liệu',
+      icon: Icons.file_upload_outlined,
+      size: BentoSize.small,
+      accentColor: Color(0xFF26C6DA),
+    ),
+    const BentoItem(
+      id: 'sos_quick',
+      title: 'SOS nhanh',
+      icon: Icons.sos,
+      size: BentoSize.small,
+      accentColor: Color(0xFFFF5252),
+    ),
+    const BentoItem(
+      id: 'community_setup',
+      title: 'Hướng dẫn Cộng đồng',
+      icon: Icons.integration_instructions_outlined,
+      size: BentoSize.small,
+      accentColor: Color(0xFFAB47BC),
+    ),
+    const BentoItem(
+      id: 'faq_privacy',
+      title: 'FAQ riêng tư',
+      icon: Icons.help_outline,
+      size: BentoSize.small,
+      accentColor: Color(0xFF78909C),
+    ),
+    const BentoItem(
       id: 'notes',
       title: 'Ghi chú',
       icon: Icons.sticky_note_2_rounded,
@@ -258,6 +290,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 ];
 
   void _onItemTap(BuildContext context, BentoItem item) {
+
+    if (item.id == 'data_export') {
+      showModalBottomSheet(context: context, isScrollControlled: true, builder: (_) => const DataExportSheet());
+      return;
+    }
+    if (item.id == 'community_setup') {
+      showModalBottomSheet(context: context, isScrollControlled: true, builder: (_) => const CommunitySetupSheet());
+      return;
+    }
+    if (item.id == 'sos_quick') {
+      sosService.broadcast().then((msg) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('SOS đã gửi: $msg')));
+        }
+      });
+      return;
+    }
+    if (item.id == 'faq_privacy') {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FaqScreen()));
+      return;
+    }
+
     if (item.id == 'privacy_policy') {
       final uri = Uri.parse(LegalUrls.privacyPolicy);
       launchUrl(uri, mode: LaunchMode.externalApplication);

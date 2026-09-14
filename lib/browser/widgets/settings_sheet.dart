@@ -481,6 +481,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
               title: const Text('Chế độ máy yếu'),
               subtitle: const Text('Giảm hiệu ứng — ổn định hơn trên máy cũ'),
               value: performanceService.lowEndMode,
+              subtitle: Text(performanceService.descriptionVi),
               onChanged: (v) async {
                 await performanceService.setLowEnd(v);
                 setState(() {});

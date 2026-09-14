@@ -8,6 +8,7 @@ import '../mesh/mesh_identity.dart';
 import '../mesh/mesh_screen.dart';
 import 'kinh_mesh_channel.dart';
 import 'premium_mode_service.dart';
+import '../services/sos_service.dart';
 
 /// UX Sinh tồn: radar peer, ID, khoảng cách RSSI, WFD, chat, gọi 1-hop.
 class PremiumMeshScreen extends StatefulWidget {
@@ -125,6 +126,19 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'SOS nhanh',
+            onPressed: () async {
+              final r = await sosService.broadcast();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('SOS: $r')),
+                );
+              }
+            },
+            icon: const Icon(Icons.sos, color: Colors.redAccent),
+          ),
+
           TextButton(
             onPressed: _toggleSurvival,
             child: Text(

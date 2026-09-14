@@ -64,6 +64,7 @@ class ChatService extends ChangeNotifier {
   Future<void> init() async {
     if (ready && initError == null) return;
     try {
+      await loadGoogleWebClientIdOverride();
       final opts = DefaultFirebaseOptions.currentPlatform;
       if (opts.apiKey.contains('REPLACE') || opts.projectId.contains('REPLACE')) {
         initError =

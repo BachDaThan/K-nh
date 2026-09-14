@@ -1,6 +1,6 @@
 {
-  "version": "0.13.4",
+  "version": "0.14.0",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 70b2fb0 (v0.13.4)"
+  "changelog": "FAQ, export HTML/MD/CSV, SOS broadcast, community setup in-app, low-end clarified"
 }
