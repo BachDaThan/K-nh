@@ -432,6 +432,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                       mode: LaunchMode.externalApplication);
                 }
               },
+            ),
 
             const Text('Duyệt web an toàn', style: TextStyle(fontWeight: FontWeight.w600)),
             Text(
@@ -486,7 +487,6 @@ class _SettingsSheetState extends State<SettingsSheet> {
               },
             ),
             const Divider(),
-            ),
           ],
         );
       },

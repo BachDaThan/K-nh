@@ -267,13 +267,17 @@ jobs:
         run: flutter pub get
 
       - name: Build EXE (release)
-        run: flutter build windows --release
+        run: |
+          $env:CMAKE_POLICY_VERSION_MINIMUM = "3.5"
+          flutter build windows --release
 
       - name: Đóng gói thư mục build thành zip
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath Kinh-Windows.zip
 
       - name: Build EXE Plus
-        run: flutter build windows --release --dart-define=KINH_EDITION=plus
+        run: |
+          $env:CMAKE_POLICY_VERSION_MINIMUM = "3.5"
+          flutter build windows --release --dart-define=KINH_EDITION=plus
 
       - name: Đóng gói Plus
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath Kinh-Plus-Windows.zip
