@@ -411,21 +411,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Tìm trên dashboard…',
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onChanged: (v) => setState(() => _dashQuery = v.trim().toLowerCase()),
-                        ),
-                      ),
-
             if (themeController.service.sidebarVisible) ...[
               AppSidebar(
                 onHome: () {},
@@ -458,6 +443,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             return CustomScrollView(
               slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  sliver: SliverToBoxAdapter(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Tìm trên dashboard…',
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        isDense: true,
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onChanged: (v) =>
+                          setState(() => _dashQuery = v.trim().toLowerCase()),
+                    ),
+                  ),
+                ),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
                   sliver: SliverToBoxAdapter(
@@ -575,10 +578,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       }
                       return e;
                     }).toList();
+                    final pins = _dashQuery.isEmpty
+                        ? _pinnedAppItems
+                        : _pinnedAppItems
+                            .where((p) =>
+                                p.title.toLowerCase().contains(_dashQuery))
+                            .toList();
                     final displayItems = [
                       ...liveFixed,
-                      ..._pinnedAppItems,
-                      addAppItem,
+                      ...pins,
+                      if (_dashQuery.isEmpty ||
+                          'thêm app'.contains(_dashQuery) ||
+                          'add'.contains(_dashQuery))
+                        addAppItem,
                     ];
                     return SliverGrid(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

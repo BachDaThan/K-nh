@@ -1,6 +1,6 @@
 {
-  "version": "0.11.1",
+  "version": "0.11.2",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 04b7f62 (v0.11.1)"
+  "changelog": "Fix dashboard: search field was breaking Row layout (empty grid)"
 }
