@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../google_auth_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../firebase_options.dart';
@@ -40,7 +41,17 @@ class ChatService extends ChangeNotifier {
   /// Danh hiệu tên đã từng claim: name -> ordinal
   Map<String, int> nameTitles = {};
 
-  final _google = GoogleSignIn(scopes: ['email', 'profile']);
+  GoogleSignIn get _google {
+    final webId = kGoogleWebClientId;
+    if (webId.contains('REPLACE')) {
+      // Vẫn thử sign-in; sẽ fail rõ nếu thiếu config
+      return GoogleSignIn(scopes: ['email', 'profile']);
+    }
+    return GoogleSignIn(
+      scopes: ['email', 'profile'],
+      serverClientId: webId,
+    );
+  }
   DatabaseReference? _db;
   StreamSubscription? _connSub;
   StreamSubscription? _onlineSub;
@@ -224,9 +235,24 @@ class ChatService extends ChangeNotifier {
       lastAuthError = null;
     } on FirebaseAuthException catch (e) {
       lastAuthError = 'Auth ${e.code}: ${e.message}';
+      if ('${e.message}${e.code}'.contains('CONFIGURATION_NOT_FOUND') ||
+          '${e.message}'.contains('configuration')) {
+        lastAuthError =
+            'CONFIGURATION_NOT_FOUND: Thêm SHA-1 keystore vào Firebase + '
+            'điền Web client ID vào lib/chat/google_auth_config.dart + '
+            'bật Google Sign-In trong Authentication.';
+      }
       debugPrint(lastAuthError);
     } catch (e) {
-      lastAuthError = '$e';
+      final s = '$e';
+      if (s.contains('CONFIGURATION_NOT_FOUND')) {
+        lastAuthError =
+            'CONFIGURATION_NOT_FOUND: (1) Firebase → Project settings → '
+            'Android app → thêm SHA-1. (2) Authentication → Google → bật. '
+            '(3) Điền Web client ID vào google_auth_config.dart';
+      } else {
+        lastAuthError = s;
+      }
       debugPrint('signIn error: $e');
     } finally {
       signingIn = false;

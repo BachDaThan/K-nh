@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import 'chat_room_screen.dart';
 import 'profile_screen.dart';
+import '../../mesh/mesh_screen.dart';
 
 class ChatHubScreen extends StatefulWidget {
   final String? currentPageUrl;
@@ -137,6 +138,15 @@ class _ChatHubScreenState extends State<ChatHubScreen>
       appBar: AppBar(
         title: const Text('Cộng đồng Kính'),
         actions: [
+          IconButton(
+            tooltip: 'Chat gần offline',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MeshScreen()),
+              );
+            },
+            icon: const Icon(Icons.bluetooth_searching),
+          ),
           if (signed)
             IconButton(
               tooltip: 'Trang cá nhân',
