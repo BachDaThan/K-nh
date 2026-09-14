@@ -479,9 +479,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Chế độ máy yếu'),
-              subtitle: const Text('Giảm hiệu ứng — ổn định hơn trên máy cũ'),
-              value: performanceService.lowEndMode,
               subtitle: Text(performanceService.descriptionVi),
+              value: performanceService.lowEndMode,
               onChanged: (v) async {
                 await performanceService.setLowEnd(v);
                 setState(() {});
