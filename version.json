@@ -1,6 +1,6 @@
 {
-  "version": "0.11.2",
+  "version": "0.12.0",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit e3cf08f (v0.11.2)"
+  "changelog": "Chat v2: login state, public ID, name ordinal titles, 30d purge, rate limit"
 }
