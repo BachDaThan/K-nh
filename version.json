@@ -2,5 +2,5 @@
   "version": "0.13.2",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "PROGRESS đầy đủ 6 bước + PRIVACY.md — đối chiếu repo thực tế"
+  "changelog": "Bản build tự động từ commit fa14002 (v0.13.2)"
 }
