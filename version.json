@@ -1,6 +1,6 @@
 {
-  "version": "0.13.3",
+  "version": "0.13.4",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit a3533ee (v0.13.3)"
+  "changelog": "Docs: PROGRESS + PRIVACY rõ local-first vs Firebase/Drive tuỳ chọn, không overclaim mesh"
 }
