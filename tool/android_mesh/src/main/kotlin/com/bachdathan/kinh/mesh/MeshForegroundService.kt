@@ -4,12 +4,9 @@ import android.app.*
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import io.flutter.plugin.common.EventChannel
 
-/**
- * Service quản lý BLE discovery (pin thấp) + Wi‑Fi Direct khi cần bulk/call.
- * Phase 1: khung + event giả lập peer local; BLE/WFD API đầy đủ gắn dần.
- */
 class MeshForegroundService : Service() {
   companion object {
     const val ACTION_START = "kinh.mesh.START"
@@ -22,6 +19,7 @@ class MeshForegroundService : Service() {
   private var displayName: String = ""
   private var ble: BleDiscovery? = null
   private var wfd: WifiDirectTransport? = null
+  private var voice: VoiceCallSession? = null
 
   override fun onBind(intent: Intent?): IBinder? = null
 
@@ -32,7 +30,7 @@ class MeshForegroundService : Service() {
       startFg()
       instance = this
       ble = BleDiscovery(this) { peer ->
-        eventSink?.success(
+        emit(
           mapOf(
             "type" to "peer",
             "id" to peer.id,
@@ -43,10 +41,33 @@ class MeshForegroundService : Service() {
         )
       }
       ble?.start(publicId, displayName)
-      wfd = WifiDirectTransport(this)
-      wfd?.init()
+      wfd = WifiDirectTransport(this).also { t ->
+        t.init()
+        t.onText = { msg ->
+          // format T|name|text
+          val parts = msg.split("|", limit = 3)
+          if (parts.size >= 3 && parts[0] == "T") {
+            emit(
+              mapOf(
+                "type" to "text",
+                "fromId" to parts[1],
+                "fromName" to parts[1],
+                "text" to parts[2],
+              )
+            )
+          }
+        }
+      }
     }
     return START_STICKY
+  }
+
+  private fun emit(map: Map<String, Any?>) {
+    try {
+      eventSink?.success(map)
+    } catch (e: Exception) {
+      Log.w("KinhMesh", "emit: $e")
+    }
   }
 
   private fun startFg() {
@@ -56,38 +77,52 @@ class MeshForegroundService : Service() {
         NotificationChannel(CH_ID, "Kính Mesh", NotificationManager.IMPORTANCE_LOW)
       )
     }
-    val n = Notification.Builder(this, CH_ID)
+    val n = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      Notification.Builder(this, CH_ID)
+    } else {
+      @Suppress("DEPRECATION")
+      Notification.Builder(this)
+    }
       .setContentTitle("Kính Mesh")
-      .setContentText("BLE đang dò peer · WFD khi cần")
+      .setContentText("BLE dò peer · WFD khi chat/call")
       .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
       .build()
     startForeground(42, n)
   }
 
   fun broadcastText(text: String) {
-    // Phase 1: gửi qua WFD nếu có group, else BLE characteristic notify (stub)
-    wfd?.broadcastPayload("T|$displayName|$text")
+    val payload = "T|$displayName|$text"
+    wfd?.ensureGroupThen {
+      wfd?.broadcastPayload(payload)
+    }
     ble?.advertiseMessage(text)
   }
 
   fun sendText(peerId: String, text: String) {
-    wfd?.sendTo(peerId, "T|$displayName|$text")
+    val payload = "T|$displayName|$text"
+    wfd?.ensureGroupThen {
+      wfd?.sendTo(peerId, payload)
+    }
   }
 
   fun startCall(peerId: String) {
-    // 1-hop WFD + audio session placeholder
-    wfd?.ensureGroupThen {
-      eventSink?.success(mapOf("type" to "call", "state" to "active", "peerId" to peerId))
-      // TODO: AudioRecord → encrypt → WFD socket; reverse play
+    val t = wfd ?: return
+    t.ensureGroupThen {
+      voice?.stop()
+      voice = VoiceCallSession(t)
+      voice?.start()
+      emit(mapOf("type" to "call", "state" to "active", "peerId" to peerId))
     }
   }
 
   fun endCall() {
-    wfd?.teardownCall()
-    eventSink?.success(mapOf("type" to "call", "state" to "ended"))
+    voice?.stop()
+    voice = null
+    emit(mapOf("type" to "call", "state" to "ended"))
   }
 
   override fun onDestroy() {
+    voice?.stop()
     ble?.stop()
     wfd?.close()
     instance = null

@@ -99,6 +99,20 @@ jobs:
           grep -E 'uses-permission' "$MANIFEST" || true
 
 
+
+      - name: Inject Premium Mesh (BLE + WFD + Call)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f tool/ci_inject_mesh.sh ]; then
+            bash tool/ci_inject_mesh.sh
+          else
+            echo "WARN: tool/ci_inject_mesh.sh missing"
+          fi
+          ls -la android/app/src/main/kotlin/com/bachdathan/kinh/mesh/ 2>/dev/null || true
+          grep -n MeshPlugin android/app/src/main/kotlin/**/MainActivity.kt 2>/dev/null || true
+          grep -n MeshForegroundService android/app/src/main/AndroidManifest.xml || true
+
       - name: Ép compileSdk 36 (app + plugins)
         shell: bash
         run: |

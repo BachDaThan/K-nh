@@ -1,16 +1,10 @@
-# 0.13.0 — Premium Hybrid Mesh (scaffold)
+# 0.13.1 — Mesh native hoàn thiện bước 1–3
 
-## Đã giao
-- Kiến trúc BLE discovery + Wi‑Fi Direct bulk/call (docs)
-- Flutter: PremiumMeshScreen, mode Auto/Sinh tồn, MethodChannel
-- Kotlin: MeshForegroundService, BleDiscovery, WifiDirectTransport (stub logic đầy đủ API)
-- CI script `tool/ci_inject_mesh.sh` copy native sau flutter create
-- Fallback: Chat gần LAN nếu native chưa inject
+1. **CI**: job Android chạy `tool/ci_inject_mesh.sh` sau khi tạo `android/`
+2. **MainActivity**: script tự `flutterEngine.plugins.add(MeshPlugin())`
+3. **WFD**: ServerSocket text :47830 + audio :47831; group owner / client connect
+4. **Call**: `VoiceCallSession` — AudioRecord 16k PCM → WFD → AudioTrack (1-hop)
 
-## Thẳng thắn
-- Call offline: thiết kế **1-hop WFD**; multi-hop voice không ổn định
-- Tầm 2–4 km chỉ ĐT: **không cam kết** (cần LoRa/Meshtastic)
-- E2E Noise + audio Opus pipeline: phase tiếp
+Quyền: BLUETOOTH_*, NEARBY_WIFI_DEVICES, RECORD_AUDIO, FGS connectedDevice.
 
-## Giữ nguyên
-- Bản chuẩn/Plus: browser, Firebase chat, LAN mesh, reader…
+Runtime: user phải cấp quyền micro + nearby trên máy.
