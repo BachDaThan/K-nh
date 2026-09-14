@@ -1,15 +1,45 @@
-# 0.9.9 — Audio truyện
+# Tiến độ dự án Kính
 
-## Có
-- Thẻ **Audio truyện**: dán link chương → tải HTML → TTS
-- Tự chuyển chương sau (heuristic link)
-- Giọng **máy offline** (đổi giọng, free, không API key)
-- Volume TTS / nhạc **tách**
-- Playlist MP3: thêm, kéo sắp xếp, lặp list / 1 bài
-- Catalog `vbookext.me/api/plugin.json` (mở nguồn — không chạy plugin.zip)
+> Cập nhật: 2026-09-14 · version **0.10.0**
 
-## Giới hạn thật
-- Khóa màn hình: wakelock + TTS audio category — **máy/OS có thể vẫn cắt** nếu tối ưu pin mạnh; Android nên bỏ tối ưu pin cho Kính.
-- Không phải foreground media service đầy đủ như Spotify.
-- Không chạy plugin vBook zip; chỉ heuristic HTML + list nguồn.
-- Site chặn bot có thể không lấy được chữ → dùng Reader/TTS trong trình duyệt Kính.
+## Trạng thái thực tế (không còn dừng ở Bước 2)
+
+Đã làm xa hơn PROGRESS cũ (Bước 2): trình duyệt, DoH, history/activity, AI Builder,
+OTA, launcher, theme, Drive, reader/TTS, audio truyện, Plus edition, v.v.
+
+### 0.10.0 — vừa làm
+- [x] **Dashboard search** — ô tìm thẻ/app trên dashboard
+- [x] **Ghi chú** — thẻ Notes hoạt động (local)
+- [x] **Nhật ký bảo mật** — mở Activity Log
+- [x] **Duyệt web an toàn** 3 mức (local, không Google API):
+  - Không bảo vệ
+  - Bảo vệ tiêu chuẩn (host độc hại đã biết)
+  - Bảo vệ nâng cao (IP trần, TLD rủi ro, đuôi file nguy hiểm…)
+- [x] **Chế độ máy yếu** — giảm tải (preference); không “tối ưu mọi SoC” ảo
+
+### Engine
+| Nền tảng | Engine |
+|----------|--------|
+| Android | System WebView (Chromium) |
+| Windows | WebView2 |
+
+GeckoView: đã thử — conflict plugin; giữ Chromium.
+
+### Quyết định giữ nguyên
+- Không commit `android/` / `windows/`
+- `flutter create` mỗi CI build
+- Không silent-install
+- Client-side, GitHub Actions + Releases
+
+### Ghi chú tối ưu phần cứng
+Không thể một binary “tối ưu hoàn hảo mọi máy cũ→mới”. Đã có:
+- Chế độ máy yếu (user bật)
+- Tree-shake icons release
+- Lazy WebView theo tab
+
+Máy rất cũ: bật **Chế độ máy yếu** trong Cài đặt trình duyệt.
+
+### Tiếp theo gợi ý
+- Safe Browsing: cập nhật list host định kỳ (file trên repo)
+- Foreground service TTS mạnh hơn khi khóa màn hình
+- EPUB reader đầy đủ

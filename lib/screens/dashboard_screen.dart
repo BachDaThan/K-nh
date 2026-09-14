@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import '../config/app_edition.dart';
 import '../addons/addon_sheet.dart';
 import '../reader/bookshelf_screen.dart';
+import 'notes_screen.dart';
+import '../browser/widgets/activity_log_sheet.dart';
+import '../browser/services/activity_log_service.dart';
+import '../browser/services/history_service.dart';
+import '../browser/services/safe_browsing_service.dart';
 import '../audio/story_audio_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,6 +47,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _weatherService = WeatherService();
   final _networkService = NetworkStatusService();
   String? _weatherSub;
+  String _dashQuery = '';
+  final _activityLog = ActivityLogService();
+  final _historyService = HistoryService();
   String? _networkSub;
 
   @override
@@ -54,6 +62,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _checkHotPatch();
       _driveSync.loadPrefs().then((_) => _driveSync.autoPullIfEnabled());
       _refreshLiveCards();
+    _activityLog.load();
+    _historyService.load();
+    safeBrowsingService.load();
     });
     _networkService.onChange.listen((_) {
       if (mounted) _refreshLiveCards();
@@ -264,6 +275,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _refreshLiveCards();
       return;
     }
+    if (item.id == 'notes') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const NotesScreen()),
+      );
+      return;
+    }
+    if (item.id == 'privacy') {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (_) => ActivityLogSheet(logService: _activityLog),
+      );
+      return;
+    }
     if (item.id == 'search') {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const BrowserScreen()),
@@ -368,6 +397,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Tìm trên dashboard…',
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            isDense: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onChanged: (v) => setState(() => _dashQuery = v.trim().toLowerCase()),
+                        ),
+                      ),
+
             if (themeController.service.sidebarVisible) ...[
               AppSidebar(
                 onHome: () {},
@@ -496,7 +540,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Item "add_app" luôn ở cuối; app đã ghim chèn ngay
                     // trước nó.
                     final fixedItems =
-                        _items.where((i) => i.id != 'add_app' && (AppEdition.isPlus || i.id != 'addons')).toList();
+                        _items.where((i) {
+                          if (i.id == 'add_app') return false;
+                          if (!AppEdition.isPlus && i.id == 'addons') return false;
+                          if (_dashQuery.isEmpty) return true;
+                          return i.title.toLowerCase().contains(_dashQuery);
+                        }).toList();
                     final addAppItem =
                         _items.firstWhere((i) => i.id == 'add_app');
                     final liveFixed = fixedItems.map((e) {

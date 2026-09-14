@@ -6,6 +6,7 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'browser_engine.dart';
 import '../services/search_engine_service.dart';
 import '../services/adblock_service.dart';
+import '../services/safe_browsing_service.dart';
 
 /// Chromium / System WebView (Android) + WebView2 (Windows).
 ///
@@ -57,6 +58,11 @@ class ChromiumBrowserEngine implements BrowserEngine {
           },
           onNavigationRequest: (request) {
             if (adblockService.shouldBlock(request.url)) {
+              return NavigationDecision.prevent;
+            }
+            final reason = safeBrowsingService.blockReason(request.url);
+            if (reason != null) {
+              debugPrint('SafeBrowsing block: $reason -> ${request.url}');
               return NavigationDecision.prevent;
             }
             return NavigationDecision.navigate;

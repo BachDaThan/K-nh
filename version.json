@@ -1,6 +1,6 @@
 {
-  "version": "0.9.9",
+  "version": "0.10.0",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 556339b (v0.9.9)"
+  "changelog": "Dashboard search + notes + privacy log + Safe Browsing 3 levels + low-end mode"
 }

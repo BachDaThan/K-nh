@@ -8,6 +8,8 @@ import '../services/download_service.dart';
 import '../services/password_service.dart';
 import '../services/search_diversity.dart';
 import '../services/search_engine_service.dart';
+import '../services/safe_browsing_service.dart';
+import '../../perf/performance_service.dart';
 import '../services/adblock_service.dart';
 import '../services/web_cosmetics_service.dart';
 import '../../reader/reader_settings.dart';
@@ -51,6 +53,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
   void initState() {
     super.initState();
     _diversity = widget.diversityService.index;
+    safeBrowsingService.load().then((_) { if (mounted) setState(() {}); });
+    performanceService.load().then((_) { if (mounted) setState(() {}); });
     _engineId = searchEngineService.currentId;
     adblockService.load().then((_) { if (mounted) setState(() {}); });
     webCosmeticsService.load().then((_) { if (mounted) setState(() {}); });
@@ -428,6 +432,60 @@ class _SettingsSheetState extends State<SettingsSheet> {
                       mode: LaunchMode.externalApplication);
                 }
               },
+
+            const Text('Duyệt web an toàn', style: TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              '3 mức kiểu Chrome — chặn local, không gửi URL lên Google.',
+              style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
+            ),
+            RadioListTile<SafeBrowsingLevel>(
+              dense: true,
+              title: const Text('Bảo vệ nâng cao'),
+              subtitle: const Text('Siết host/TLD/IP/đuôi file nguy hiểm'),
+              value: SafeBrowsingLevel.enhanced,
+              groupValue: safeBrowsingService.level,
+              onChanged: (v) async {
+                if (v == null) return;
+                await safeBrowsingService.setLevel(v);
+                setState(() {});
+              },
+            ),
+            RadioListTile<SafeBrowsingLevel>(
+              dense: true,
+              title: const Text('Bảo vệ tiêu chuẩn'),
+              subtitle: const Text('Chặn host độc hại đã biết'),
+              value: SafeBrowsingLevel.standard,
+              groupValue: safeBrowsingService.level,
+              onChanged: (v) async {
+                if (v == null) return;
+                await safeBrowsingService.setLevel(v);
+                setState(() {});
+              },
+            ),
+            RadioListTile<SafeBrowsingLevel>(
+              dense: true,
+              title: const Text('Không bảo vệ'),
+              subtitle: const Text('Không khuyến nghị'),
+              value: SafeBrowsingLevel.off,
+              groupValue: safeBrowsingService.level,
+              onChanged: (v) async {
+                if (v == null) return;
+                await safeBrowsingService.setLevel(v);
+                setState(() {});
+              },
+            ),
+            const Divider(),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Chế độ máy yếu'),
+              subtitle: const Text('Giảm hiệu ứng — ổn định hơn trên máy cũ'),
+              value: performanceService.lowEndMode,
+              onChanged: (v) async {
+                await performanceService.setLowEnd(v);
+                setState(() {});
+              },
+            ),
+            const Divider(),
             ),
           ],
         );
