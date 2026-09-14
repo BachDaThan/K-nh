@@ -2,5 +2,5 @@
   "version": "0.13.1",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "CI inject mesh + MainActivity MeshPlugin + WFD sockets + AudioRecord 1-hop call"
+  "changelog": "Bản build tự động từ commit a01fd35 (v0.13.1)"
 }
