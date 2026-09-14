@@ -5,6 +5,7 @@ import '../reader/bookshelf_screen.dart';
 import 'notes_screen.dart';
 import '../chat/screens/chat_hub_screen.dart';
 import '../mesh/mesh_screen.dart';
+import '../premium/premium_mesh_screen.dart';
 import '../browser/widgets/activity_log_sheet.dart';
 import '../browser/services/activity_log_service.dart';
 import '../browser/services/history_service.dart';
@@ -213,6 +214,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       accentColor: Color(0xFF9E9E9E),
     ),
     const BentoItem(
+      id: 'premium_mesh',
+      title: 'Premium Mesh',
+      icon: Icons.cell_tower,
+      size: BentoSize.small,
+      accentColor: Color(0xFFFF7043),
+    ),
+    const BentoItem(
       id: 'mesh_offline',
       title: 'Chat gần offline',
       icon: Icons.bluetooth_searching,
@@ -264,6 +272,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
         builder: (_) => const AddonSheet(),
+      );
+      return;
+    }
+    if (item.id == 'premium_mesh') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const PremiumMeshScreen()),
       );
       return;
     }

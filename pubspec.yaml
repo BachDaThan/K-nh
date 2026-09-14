@@ -2,7 +2,7 @@ name: kinh
 description: "Kính - Trình duyệt Dashboard All-in-One, minh bạch và riêng tư."
 publish_to: 'none'
 
-version: 0.12.1+39
+version: 0.13.0+40
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

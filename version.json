@@ -1,6 +1,6 @@
 {
-  "version": "0.12.1",
+  "version": "0.13.0",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit ecbdcd5 (v0.12.1)"
+  "changelog": "Premium Mesh scaffold: BLE+WFD architecture, native service stubs, 1-hop call API, Survival mode toggle"
 }
