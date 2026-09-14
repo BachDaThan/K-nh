@@ -2,5 +2,5 @@
   "version": "0.12.1",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Fix Google CONFIGURATION_NOT_FOUND guide + offline offline LAN mesh (std/plus)"
+  "changelog": "Bản build tự động từ commit ecbdcd5 (v0.12.1)"
 }
