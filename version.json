@@ -1,6 +1,6 @@
 {
-  "version": "0.14.1",
+  "version": "0.14.2",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Community guide: split end-user vs self-build, clear no-Firebase for APK users"
+  "changelog": "Docs: PROGRESS, PRIVACY, FAQ đầy đủ trở lại (2 nhóm Cộng đồng, local vs cloud)"
 }
