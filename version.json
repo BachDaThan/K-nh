@@ -1,6 +1,6 @@
 {
-  "version": "0.14.0",
+  "version": "0.14.1",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "FAQ, export HTML/MD/CSV, SOS broadcast, community setup in-app, low-end clarified"
+  "changelog": "Community guide: split end-user vs self-build, clear no-Firebase for APK users"
 }

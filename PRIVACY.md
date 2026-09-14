@@ -1,17 +1,6 @@
-# Chính sách quyền riêng tư — Kính
+# Chính sách quyền riêng tư — Kính (bổ sung 0.14.1)
 
-**Cập nhật:** 2026-09-14 · **v0.14.0**
+User chỉ cài APK phát hành công khai **không** phải tạo project Firebase.
+Cấu hình Firebase/SHA-1 là trách nhiệm nhà phát hành APK (hoặc người tự build).
 
-## Tóm tắt
-| Dữ liệu | Ở đâu |
-|---------|--------|
-| Duyệt web, bookmark, lịch sử, ghi chú, export | Máy bạn |
-| SOS / chat LAN / Mesh | P2P máy gần — không server Kính |
-| Cộng đồng | Firebase (khi đăng nhập Google) |
-| Drive | Google Drive (khi bạn bật) |
-
-- Không cài ngầm. Không bán data quảng cáo.
-- Web client ID lưu local chỉ để Google Sign-In.
-- Chi tiết + câu hỏi thường gặp: **FAQ.md**.
-
-**Liên hệ:** https://github.com/BachDaThan/K-nh
+Các mục local / P2P / Cộng đồng tuỳ chọn: như PRIVACY trước + FAQ.md.

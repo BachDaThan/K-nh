@@ -1,45 +1,33 @@
 # Câu hỏi thường gặp — Kính
 
-Ngôn ngữ đời thường. Chi tiết kỹ thuật xem `PRIVACY.md` và `PROGRESS.md`.
+## Cộng đồng / đăng nhập Google — 2 nhóm người
 
-## 1. Tôi không biết code — có dùng được app không?
+### Nhóm A — Chỉ cài APK có sẵn từ Releases
+**Không cần** tạo Firebase, **không cần** SHA-1, **không cần** dán Web client ID.  
+Chỉ: cài APK → Cộng đồng → Đăng nhập Google.
 
-**Có.** Duyệt web, ghi chú, bookmark, sao lưu trên máy, chat gần (LAN/hotspot), đọc sách/TTS… **không cần** viết code.
+Nếu lỗi cấu hình: thường do **nhà phát hành** chưa gắn đúng SHA-1 trên Firebase — bạn không “đăng ký thiếu”.
 
-Chỉ khi bạn muốn **Cộng đồng online (Firebase)** hoặc **Drive** thì cần làm vài bước trên trang Google/Firebase (hoặc dán Web client ID trong app — mục Hướng dẫn Cộng đồng).
+### Nhóm B — Clone repo / tự build APK
+**Cần** cấu hình: bật Google Sign-In, thêm **SHA-1 keystore của bạn**, dán **Web client ID** trong app (Hướng dẫn Cộng đồng) hoặc trong code.  
+APK tự build chữ ký khác bản phát hành → bắt buộc bước này.
 
-## 2. Bắt buộc đăng nhập Google không?
+Chi tiết từng bước: trong app → **Hướng dẫn Cộng đồng** (chọn đúng nhóm).
 
-**Không.** Không đăng nhập vẫn dùng gần như toàn bộ phần local.
+---
 
-Đăng nhập Google **chỉ** để: chat Cộng đồng, đồng bộ Drive (nếu bật).
+## Các câu hỏi khác
 
-## 3. Tác giả app có đọc được tin nhắn của tôi không?
+**Không biết code có dùng được không?**  
+Có. Duyệt web, ghi chú, mesh/LAN không cần code. Cộng đồng online chỉ cần nếu bạn muốn chat cloud.
 
-- **Chat gần / Mesh offline:** tin đi máy ↔ máy, **không** qua server Kính. Tác giả **không** nhận được nội dung đó.
-- **Cộng đồng (Firebase):** tin nằm trên **Firebase project** gắn app. Người **có quyền Console** project đó (thường là chủ repo) *về mặt kỹ thuật* có thể xem dữ liệu database — giống mọi app dùng Firebase. Đây **không** phải “chỉ trên máy”. Không muốn vậy thì **đừng dùng Cộng đồng**.
+**Bắt buộc Google?**  
+Không. Local-first: không đăng nhập vẫn dùng phần lớn tính năng.
 
-## 4. Mesh / “kiểu Bitchat” có gửi tin đi internet không?
+**Tác giả có đọc tin nhắn?**  
+LAN/Mesh: không qua server Kính. Cộng đồng: dữ liệu trên Firebase — người có quyền Console project có thể xem được; không muốn thì đừng dùng Cộng đồng.
 
-**Không bắt buộc.** LAN mesh và Premium Mesh thiết kế **P2P / local**.  
-App **không** cam kết tầm vài km chỉ bằng điện thoại; gọi thoại ổn định nhất **1 máy gần (1-hop)**.
+**Cập nhật có cài ngầm?**  
+Không. Bạn xác nhận cài.
 
-## 5. “Duyệt an toàn” có gửi URL cho Google không?
-
-Mức trong app là **lọc/heuristic local**. **Không** đồng nghĩa mọi URL được gửi lên Google Safe Browsing API.
-
-## 6. Cập nhật app có tự cài ngầm không?
-
-**Không.** Có bản mới → tải → **bạn bấm xác nhận cài**.
-
-## 7. Low-end mode là gì?
-
-Chế độ máy yếu: giảm animation, hạn chế tab, ưu tiên nhẹ hơn. Bật trong Cài đặt trình duyệt / hiệu năng.
-
-## 8. SOS nhanh là gì?
-
-Một nút gửi tin cố định (“cần hỗ trợ / đang ổn…”) tới **mọi máy Kính gần** trên mesh/LAN — không cần gõ từng peer. Có thể kèm GPS **chỉ khi bạn cho phép**.
-
-## 9. Xuất dữ liệu để làm gì?
-
-Export bookmark (HTML mở được bằng Chrome/Firefox), ghi chú (Markdown), lịch sử (CSV) — **không nhốt data** trong app.
+Xem thêm `PRIVACY.md`, `PROGRESS.md`.
