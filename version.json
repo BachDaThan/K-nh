@@ -2,5 +2,5 @@
   "version": "0.14.3",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Fix build: notes export interpolation + duplicate SwitchListTile subtitle"
+  "changelog": "Bản build tự động từ commit 47a738c (v0.14.3)"
 }
