@@ -1,6 +1,6 @@
 {
-  "version": "0.13.2",
+  "version": "0.13.3",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit fa14002 (v0.13.2)"
+  "changelog": "Survival UX: radar peers, RSSI distance, WFD status, 1-hop call CTA"
 }
