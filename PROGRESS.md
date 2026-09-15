@@ -170,3 +170,8 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 - Màn **Chat offline**: LAN (Wi‑Fi/hotspot) + native BLE/WFD nếu APK inject
 - Tắt Wi‑Fi → mất LAN; BLE cần **Bluetooth + Thiết bị gần** trên **cả hai** máy
 - Ảnh quyền chỉ Micro/Vị trí → chưa đủ cho mesh BLE (Android 12+)
+
+## 0.15.7
+- Xin quyền Bluetooth/Nearby/Location/Micro **khi mở Chat offline** (`permission_handler`)
+- Nút mở Cài đặt quyền app (hữu ích **Xiaomi/MIUI** khi không hiện dialog)
+- Samsung thường hiện hộp thoại; Xiaomi hay phải bật tay trong Quyền / Quyền khác

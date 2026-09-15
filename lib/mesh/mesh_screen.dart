@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../premium/kinh_mesh_channel.dart';
+import '../services/mesh_permissions.dart';
 import 'local_mesh_service.dart';
 import 'mesh_identity.dart';
 
-/// Chat offline thống nhất: LAN (Wi‑Fi/hotspot) + Premium native BLE/WFD nếu APK có plugin.
 class MeshScreen extends StatefulWidget {
   const MeshScreen({super.key});
 
@@ -21,6 +21,7 @@ class _MeshScreenState extends State<MeshScreen> {
   bool _native = false;
   StreamSubscription? _textSub;
   String _status = '';
+  String? _permHint;
 
   @override
   void initState() {
@@ -33,7 +34,10 @@ class _MeshScreenState extends State<MeshScreen> {
     _nameCtrl.text = meshIdentity.displayName;
     localMeshService.addListener(_on);
     kinhMeshChannel.addListener(_on);
-    // LAN luôn bật khi mở màn (cần Wi‑Fi/hotspot)
+
+    // Xin quyền NGAY khi mở màn (Samsung thường hiện dialog; Xiaomi có thể không đủ)
+    _permHint = await MeshPermissions.ensureForMesh();
+
     if (!localMeshService.running) {
       await localMeshService.start();
     }
@@ -53,10 +57,11 @@ class _MeshScreenState extends State<MeshScreen> {
           ));
         });
       });
-      _status = 'Native BLE/WFD sẵn sàng — cấp quyền Bluetooth / Thiết bị gần trên **cả hai** máy';
+      _status =
+          'Native BLE/WFD: cần Bluetooth + quyền trên CẢ HAI máy (Samsung + Xiaomi).';
     } else {
       _status =
-          'Chỉ LAN (cùng Wi‑Fi/hotspot). APK chưa có native mesh hoặc build chưa inject.';
+          'Chỉ LAN (Wi‑Fi/hotspot). APK chưa native hoặc inject lỗi.';
     }
     if (mounted) setState(() {});
   }
@@ -70,7 +75,6 @@ class _MeshScreenState extends State<MeshScreen> {
     _textSub?.cancel();
     localMeshService.removeListener(_on);
     kinhMeshChannel.removeListener(_on);
-    // Giữ service nếu Premium cũng dùng; chỉ stop LAN khi rời màn chuẩn
     localMeshService.stop();
     if (kinhMeshChannel.running) {
       kinhMeshChannel.stop();
@@ -90,7 +94,12 @@ class _MeshScreenState extends State<MeshScreen> {
       } catch (_) {}
     }
     setState(() {
-      _lines.add(_Line(mine: true, name: 'Bạn', text: t, via: _native ? 'lan+ble' : 'lan'));
+      _lines.add(_Line(
+        mine: true,
+        name: 'Bạn',
+        text: t,
+        via: _native ? 'lan+ble' : 'lan',
+      ));
     });
     _ctrl.clear();
   }
@@ -106,6 +115,7 @@ class _MeshScreenState extends State<MeshScreen> {
   }
 
   Future<void> _rescan() async {
+    _permHint = await MeshPermissions.ensureForMesh();
     if (!localMeshService.running) await localMeshService.start();
     if (_native) {
       if (!kinhMeshChannel.running) {
@@ -118,17 +128,6 @@ class _MeshScreenState extends State<MeshScreen> {
       }
     }
     setState(() {});
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _native
-                ? 'Đã quét lại LAN + BLE. Kiểm tra quyền Bluetooth/Nearby trên cả 2 máy.'
-                : 'Đã quét LAN. Cần cùng Wi‑Fi/hotspot.',
-          ),
-        ),
-      );
-    }
   }
 
   @override
@@ -136,8 +135,6 @@ class _MeshScreenState extends State<MeshScreen> {
     final lan = localMeshService;
     final blePeers = kinhMeshChannel.peers.values.toList();
     final lanPeers = lan.peers.values.toList();
-
-    // Merge lines: LAN history + local _lines
     final allLines = <_Line>[
       ...lan.lines.map(
         (e) => _Line(
@@ -147,7 +144,9 @@ class _MeshScreenState extends State<MeshScreen> {
           via: e.storeForward ? 'sf' : 'lan',
         ),
       ),
-      ..._lines.where((l) => !lan.lines.any((x) => x.text == l.text && x.mine == l.mine)),
+      ..._lines.where(
+        (l) => !lan.lines.any((x) => x.text == l.text && x.mine == l.mine),
+      ),
     ];
 
     return Scaffold(
@@ -155,13 +154,18 @@ class _MeshScreenState extends State<MeshScreen> {
         title: const Text('Chat offline'),
         actions: [
           IconButton(
-            tooltip: 'Quét lại',
+            tooltip: 'Xin quyền + quét lại',
             onPressed: _rescan,
             icon: const Icon(Icons.radar),
           ),
+          IconButton(
+            tooltip: 'Mở Cài đặt quyền app',
+            onPressed: () => MeshPermissions.openAppSettingsPage(),
+            icon: const Icon(Icons.settings_applications),
+          ),
           TextButton(
             onPressed: () async {
-              if (lan.running) {
+              if (lan.running || kinhMeshChannel.running) {
                 await lan.stop();
                 if (kinhMeshChannel.running) await kinhMeshChannel.stop();
               } else {
@@ -183,33 +187,43 @@ class _MeshScreenState extends State<MeshScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ID ${meshIdentity.publicId ?? "…"} · '
-                    'LAN ${lanPeers.length} · BLE ${blePeers.length}',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    'ID ${meshIdentity.publicId ?? "…"} · LAN ${lanPeers.length} · BLE ${blePeers.length}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(_status, style: const TextStyle(fontSize: 11)),
+                  if (_permHint != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      _permHint!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 6),
                   Text(
-                    '• Cùng Wi‑Fi/hotspot → chat LAN (tắt Wi‑Fi là mất kênh này)\n'
-                    '• BLE/WFD (native) → cần Bluetooth + quyền “Thiết bị gần” '
-                    'trên CẢ HAI máy; không phụ thuộc Wi‑Fi\n'
-                    '• Ảnh quyền chỉ Micro/Vị trí là chưa đủ cho BLE Android 12+',
+                    'Xiaomi: nếu không thấy “Thiết bị gần”, vào Cài đặt → Ứng dụng → '
+                    'Kính → Quyền (hoặc Quyền khác) → bật Bluetooth / Thiết bị gần thủ công. '
+                    'Samsung thường hiện hộp thoại khi app xin.\n'
+                    'LAN cần Wi‑Fi/hotspot; BLE cần BT + quyền cả 2 máy.',
                     style: TextStyle(
                       fontSize: 11,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   if (kinhMeshChannel.lastError != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        kinhMeshChannel.lastError!,
-                        style: const TextStyle(color: Colors.orangeAccent, fontSize: 11),
+                    Text(
+                      kinhMeshChannel.lastError!,
+                      style: const TextStyle(
+                        color: Colors.orangeAccent,
+                        fontSize: 11,
                       ),
                     ),
-                  if (lan.lastError != null)
-                    Text(lan.lastError!, style: const TextStyle(color: Colors.redAccent, fontSize: 11)),
                 ],
               ),
             ),
@@ -230,13 +244,6 @@ class _MeshScreenState extends State<MeshScreen> {
                 TextButton(
                   onPressed: () async {
                     await meshIdentity.setDisplayName(_nameCtrl.text.trim());
-                    if (_native && kinhMeshChannel.running) {
-                      await kinhMeshChannel.stop();
-                      await kinhMeshChannel.start(
-                        publicId: meshIdentity.publicId ?? 'UNKNOWN',
-                        displayName: meshIdentity.displayName,
-                      );
-                    }
                     setState(() {});
                   },
                   child: const Text('Lưu'),
@@ -255,7 +262,10 @@ class _MeshScreenState extends State<MeshScreen> {
                     Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: Chip(
-                        label: Text('LAN ${p.name}', style: const TextStyle(fontSize: 11)),
+                        label: Text(
+                          'LAN ${p.name}',
+                          style: const TextStyle(fontSize: 11),
+                        ),
                         visualDensity: VisualDensity.compact,
                       ),
                     ),
@@ -285,11 +295,16 @@ class _MeshScreenState extends State<MeshScreen> {
                       line.mine ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: line.mine
                           ? Theme.of(context).colorScheme.primaryContainer
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -298,7 +313,10 @@ class _MeshScreenState extends State<MeshScreen> {
                         if (!line.mine)
                           Text(
                             line.name,
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         Text(line.text),
                         Text(
@@ -332,12 +350,10 @@ class _MeshScreenState extends State<MeshScreen> {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Gửi ngay (LAN + BLE nếu có)',
                     onPressed: _send,
                     icon: const Icon(Icons.send),
                   ),
                   IconButton(
-                    tooltip: 'Store-and-Forward',
                     onPressed: _sendSf,
                     icon: const Icon(Icons.outbox),
                   ),
