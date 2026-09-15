@@ -165,3 +165,8 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 
 ## 0.15.5
 - Fix `ci_inject_mesh.sh`: **không** chèn `import` trước `package` (lỗi compile MainActivity.kt).
+
+## 0.15.6 — Chat offline thống nhất
+- Màn **Chat offline**: LAN (Wi‑Fi/hotspot) + native BLE/WFD nếu APK inject
+- Tắt Wi‑Fi → mất LAN; BLE cần **Bluetooth + Thiết bị gần** trên **cả hai** máy
+- Ảnh quyền chỉ Micro/Vị trí → chưa đủ cho mesh BLE (Android 12+)
