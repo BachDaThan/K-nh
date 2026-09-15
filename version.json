@@ -2,5 +2,5 @@
   "version": "0.15.9",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Remove permission_handler (Windows MSVC STL1011); mesh perms via native Android only"
+  "changelog": "Bản build tự động từ commit 2b38a0d (v0.15.9)"
 }
