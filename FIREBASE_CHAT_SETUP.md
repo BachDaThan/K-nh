@@ -47,3 +47,16 @@ OAuth consent + SHA-1 debug/release (Android) cho Google Sign-In.
 
 ## 6. CI / không commit android/
 Dùng `Firebase.initializeApp(options: DefaultFirebaseOptions...)` trong Dart — không bắt buộc `google-services.json` nếu options đủ (Android Google Sign-In vẫn cần SHA đúng).
+
+## Rules RTDB (chặt)
+
+Dùng file trong repo: `tool/firebase_rtdb_rules.json`  
+Hướng dẫn: `docs/FIREBASE_RULES.md`
+
+- Chỉ user đã **Google Sign-In** (`auth != null`) mới đọc/ghi chat.
+- Mỗi user chỉ ghi `online` / `presence` / `users` đúng `auth.uid`.
+- Tin nhắn: `uid` phải trùng `auth.uid`, text tối đa 2000 ký tự.
+
+## API key trên GitHub Secret scanning
+
+Key trong `lib/firebase_options.dart` là **client key**. Siết trên Google Cloud (Android package + SHA-1 + API list). Xem `docs/FIREBASE_RULES.md`.

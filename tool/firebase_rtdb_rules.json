@@ -1,0 +1,67 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "presence": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $uid",
+        ".validate": "newData.hasChildren(['online', 'updatedAt']) && newData.child('online').isBoolean() && newData.child('updatedAt').isNumber()"
+      }
+    },
+
+    "online": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid",
+        ".validate": "newData.hasChildren(['name', 'publicId', 'at']) && newData.child('name').isString() && newData.child('name').val().length <= 64 && newData.child('publicId').isString() && newData.child('publicId').val().length <= 32 && newData.child('at').isNumber()"
+      }
+    },
+
+    "rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        "meta": {
+          ".write": "auth != null",
+          ".validate": "newData.hasChildren(['type', 'updatedAt']) && newData.child('type').isString() && newData.child('updatedAt').isNumber()"
+        },
+        "messages": {
+          ".read": "auth != null",
+          "$msgId": {
+            ".write": "auth != null && (!data.exists() || data.child('uid').val() == auth.uid)",
+            ".validate": "newData.hasChildren(['uid', 'text', 'at']) && newData.child('uid').val() == auth.uid && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && newData.child('at').isNumber()"
+          }
+        }
+      }
+    },
+
+    "dm": {
+      "$pairId": {
+        ".read": "auth != null && ($pairId.contains(auth.uid) || root.child('dmAccess').child($pairId).child(auth.uid).val() == true)",
+        "messages": {
+          "$msgId": {
+            ".write": "auth != null && newData.child('uid').val() == auth.uid && (!data.exists() || data.child('uid').val() == auth.uid)",
+            ".validate": "newData.hasChildren(['uid', 'text', 'at']) && newData.child('text').isString() && newData.child('text').val().length <= 2000 && newData.child('at').isNumber()"
+          }
+        }
+      }
+    },
+
+    "nameRegistry": {
+      "$nameKey": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "newData.isNumber() || newData.hasChildren()"
+      }
+    },
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $uid",
+        ".validate": "newData.child('publicId').isString() && newData.child('publicId').val().length <= 32"
+      }
+    }
+  }
+}

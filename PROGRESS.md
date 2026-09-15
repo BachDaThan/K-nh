@@ -134,3 +134,11 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 **Đã làm:** S&F **chỉ tin nhắn chữ** trên mesh LAN (và SOS).
 
 **Cố ý không làm** (Gemini): CouchDB/Briar đầy đủ, Nostr, sóng âm, Li-Fi, DTN NASA đầy đủ, fractal compression, Edge AI routing, FEC/Codec2 multi-hop voice, Wi-Fi Aware sâu, PQC lattice, drone, quantum, bio-mesh.
+
+---
+
+## 0.15.1 — Rules Firebase chặt + dự phòng Android Key Rotation
+
+- `tool/firebase_rtdb_rules.json`: root cấm; chat/presence chỉ `auth != null`; ghi đúng uid; text ≤ 2000.
+- `docs/FIREBASE_RULES.md`: cách Publish rules + siết API key.
+- `docs/ANDROID_KEY_ROTATION.md`: Signature v3/v4, lineage, SHA Firebase, secrets CI khi **đổi** keystore — **dự phòng**, không bắt buộc mỗi build.
