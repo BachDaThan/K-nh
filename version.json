@@ -2,5 +2,5 @@
   "version": "0.15.5",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Fix CI mesh inject: Kotlin imports after package in MainActivity"
+  "changelog": "Bản build tự động từ commit 19a04c1 (v0.15.5)"
 }
