@@ -159,3 +159,6 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 - Native: xin quyền runtime khi bật mesh; `scan` thủ công; rescan BLE
 - Premium UI: **tự bật LAN fallback** nếu không có plugin; nút **Quét lại**; hiện peer LAN khi native thiếu
 - Chat gần (UDP) vẫn là kênh ổn định khi cùng Wi‑Fi/hotspot; BLE cần APK mới + quyền BT
+
+## 0.15.4
+- Fix compile: `settings_sheet.dart` (orphan style / DoH block) — build Android+Windows lại.

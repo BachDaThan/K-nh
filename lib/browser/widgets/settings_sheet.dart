@@ -176,8 +176,10 @@ class _SettingsSheetState extends State<SettingsSheet> {
 
 
             // DoH — UI kiểu "DNS bảo mật" Android (Private DNS)
-            const Text('DNS bảo mật (DoH trong app)',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+            const Text(
+              'DNS bảo mật (DoH trong app)',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+            ),
             const SizedBox(height: 4),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
@@ -185,94 +187,113 @@ class _SettingsSheetState extends State<SettingsSheet> {
               subtitle: const Text(
                 'Chọn nhà cung cấp DoH trong app (không đổi DNS toàn máy)',
               ),
-              value: widget.dohService.enabled,
+              value: widget.dohService.enabled && _dohSelectedId != 'system',
               onChanged: (v) async {
-                await widget.dohService.setEnabled(v);
+                if (!v) {
+                  setState(() => _dohSelectedId = 'system');
+                  await widget.dohService.setEnabled(false);
+                } else {
+                  setState(() {
+                    if (_dohSelectedId == 'system') {
+                      _dohSelectedId = DohProvider.presets.first.id;
+                    }
+                  });
+                  await widget.dohService.setEnabled(true);
+                  final p = DohProvider.presets.firstWhere(
+                    (e) => e.id == _dohSelectedId,
+                    orElse: () => DohProvider.presets.first,
+                  );
+                  if (_dohSelectedId != 'custom') {
+                    await widget.dohService.setProvider(p);
+                  }
+                }
                 setState(() {});
                 widget.onChanged();
               },
             ),
-            if (widget.dohService.enabled) ...[
-              RadioListTile<String>(
+            RadioListTile<String>(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Theo DNS máy'),
+              subtitle: const Text('Không ép DoH trong app'),
+              value: 'system',
+              groupValue: _dohSelectedId,
+              onChanged: (_) async {
+                setState(() => _dohSelectedId = 'system');
+                await widget.dohService.setEnabled(false);
+                setState(() {});
+                widget.onChanged();
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.only(top: 4, bottom: 4),
+              child: Text(
+                'Chọn nhà cung cấp khác',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+            ...DohProvider.presets.map((p) {
+              return RadioListTile<String>(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Theo DNS máy (không ép DoH app)'),
-                subtitle: const Text('Giống “nhà cung cấp hiện tại” trên Android'),
-                value: 'system',
+                title: Text(p.name),
+                subtitle: p.subtitle != null ? Text(p.subtitle!) : null,
+                value: p.id,
                 groupValue: _dohSelectedId,
-                onChanged: (_) async {
-                  setState(() => _dohSelectedId = 'system');
-                  await widget.dohService.setEnabled(false);
-                  setState(() {});
+                onChanged: (id) async {
+                  if (id == null) return;
+                  setState(() => _dohSelectedId = id);
+                  await widget.dohService.setEnabled(true);
+                  await widget.dohService.setProvider(p);
                   widget.onChanged();
+                  setState(() {});
                 },
-              ),
-              const Padding(
-                padding: EdgeInsets.only(top: 4, bottom: 4),
-                child: Text('Chọn nhà cung cấp khác',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
-              ),
-              ...DohProvider.presets.map((p) {
-                return RadioListTile<String>(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(p.name),
-                  subtitle: p.subtitle != null ? Text(p.subtitle!) : null,
-                  value: p.id,
-                  groupValue: _dohSelectedId,
-                  onChanged: (id) async {
-                    if (id == null) return;
-                    setState(() => _dohSelectedId = id);
-                    await widget.dohService.setEnabled(true);
-                    await widget.dohService.setProvider(p);
-                    widget.onChanged();
-                    setState(() {});
-                  },
-                  selected: _dohSelectedId == p.id,
-                );
-              }),
-              RadioListTile<String>(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Tùy chỉnh'),
-                subtitle: const Text('URL của nhà cung cấp (DoH)'),
-                value: 'custom',
-                groupValue: _dohSelectedId,
-                onChanged: (_) {
-                  setState(() => _dohSelectedId = 'custom');
-                },
-                selected: _dohSelectedId == 'custom',
-              ),
-              if (_dohSelectedId == 'custom')
-                Padding(
-                  padding: const EdgeInsets.only(left: 8, bottom: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _customDohController,
-                          decoration: const InputDecoration(
-                            labelText: 'URL DoH',
-                            hintText: 'https://dns.nextdns.io/...',
-                            isDense: true,
-                            border: OutlineInputBorder(),
-                          ),
-                          onSubmitted: (_) => _saveCustomDoh(),
+              );
+            }),
+            RadioListTile<String>(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Tùy chỉnh'),
+              subtitle: const Text('URL của nhà cung cấp (DoH)'),
+              value: 'custom',
+              groupValue: _dohSelectedId,
+              onChanged: (_) {
+                setState(() => _dohSelectedId = 'custom');
+              },
+            ),
+            if (_dohSelectedId == 'custom')
+              Padding(
+                padding: const EdgeInsets.only(left: 8, bottom: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _customDohController,
+                        decoration: const InputDecoration(
+                          labelText: 'URL DoH',
+                          hintText: 'https://dns.nextdns.io/...',
+                          isDense: true,
+                          border: OutlineInputBorder(),
                         ),
+                        onSubmitted: (_) => _saveCustomDoh(),
                       ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: _saveCustomDoh,
-                        child: const Text('Lưu'),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: _saveCustomDoh,
+                      child: const Text('Lưu'),
+                    ),
+                  ],
                 ),
-            ],
+              ),
             const Text(
               'Khác Private DNS hệ thống (DoT toàn máy): System WebView vẫn '
               'phân giải DNS theo máy. Muốn DNS cho cả điện thoại → Cài đặt Android '
               '→ Mạng → DNS bảo mật. Kính lưu DoH để UI thống nhất / engine sau này.',
               style: TextStyle(fontSize: 11),
             ),
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            const Divider(height: 24),
+            const Text(
+              'Máy tìm kiếm mặc định',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 4),
             ...SearchEngineService.engines.map((e) {
               return RadioListTile<String>(
