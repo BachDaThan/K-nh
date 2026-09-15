@@ -162,3 +162,6 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 
 ## 0.15.4
 - Fix compile: `settings_sheet.dart` (orphan style / DoH block) — build Android+Windows lại.
+
+## 0.15.5
+- Fix `ci_inject_mesh.sh`: **không** chèn `import` trước `package` (lỗi compile MainActivity.kt).

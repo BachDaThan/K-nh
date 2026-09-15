@@ -1,6 +1,6 @@
 {
-  "version": "0.15.4",
+  "version": "0.15.5",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Fix settings_sheet.dart syntax (DoH block + search engine header)"
+  "changelog": "Fix CI mesh inject: Kotlin imports after package in MainActivity"
 }
