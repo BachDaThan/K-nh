@@ -121,6 +121,12 @@ class MeshForegroundService : Service() {
     emit(mapOf("type" to "call", "state" to "ended"))
   }
 
+  fun rescan() {
+    ble?.stop()
+    ble?.start(publicId, displayName)
+    emit(mapOf("type" to "status", "state" to "scanning"))
+  }
+
   override fun onDestroy() {
     voice?.stop()
     ble?.stop()

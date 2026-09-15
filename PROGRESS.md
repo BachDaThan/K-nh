@@ -150,3 +150,12 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 - Bật/tắt + preset: Cloudflare, Google, OpenDNS, CleanBrowsing Family, AdGuard, Cloudflare Family
 - Tùy chỉnh URL DoH (NextDNS / self-hosted…)
 - **Giới hạn:** System WebView không đổi Private DNS toàn máy; muốn DNS cả máy → Cài đặt Android. App lưu lựa chọn DoH trong Kính.
+
+---
+
+## 0.15.3 — Fix Premium Mesh native
+
+- CI inject: đăng ký MeshPlugin chắc hơn trên mọi MainActivity; quyền BT/Nearby/FGS/POST_NOTIFICATIONS
+- Native: xin quyền runtime khi bật mesh; `scan` thủ công; rescan BLE
+- Premium UI: **tự bật LAN fallback** nếu không có plugin; nút **Quét lại**; hiện peer LAN khi native thiếu
+- Chat gần (UDP) vẫn là kênh ổn định khi cùng Wi‑Fi/hotspot; BLE cần APK mới + quyền BT

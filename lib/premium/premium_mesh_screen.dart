@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../mesh/mesh_identity.dart';
+import '../mesh/local_mesh_service.dart';
 import '../mesh/mesh_screen.dart';
 import 'kinh_mesh_channel.dart';
 import 'premium_mode_service.dart';
@@ -38,10 +39,12 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
     _boot();
   }
 
+
   Future<void> _boot() async {
     await premiumModeService.load();
     await meshIdentity.loadOrCreate();
     kinhMeshChannel.addListener(_onMesh);
+    localMeshService.addListener(_onMesh);
     _native = await kinhMeshChannel.isNativeAvailable;
     if (_native) {
       await kinhMeshChannel.start(
@@ -60,6 +63,11 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
       _callSub = kinhMeshChannel.callEvents.stream.listen((_) {
         if (mounted) setState(() {});
       });
+    } else {
+      // Fallback: bật LAN mesh tự động để vẫn quét/chat được
+      if (!localMeshService.running) {
+        await localMeshService.start();
+      }
     }
     if (mounted) setState(() {});
   }
@@ -75,6 +83,8 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
     _callSub?.cancel();
     kinhMeshChannel.removeListener(_onMesh);
     kinhMeshChannel.stop();
+    localMeshService.removeListener(_onMesh);
+    // không stop LAN nếu user còn dùng Chat gần
     _ctrl.dispose();
     super.dispose();
   }
@@ -106,8 +116,18 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
   @override
   Widget build(BuildContext context) {
     final survival = premiumModeService.mode == PremiumMeshMode.survival;
-    final peers = kinhMeshChannel.peers.values.toList()
-      ..sort((a, b) => b.rssi.compareTo(a.rssi));
+    final peers = <MeshPeerInfo>[
+      ...kinhMeshChannel.peers.values,
+      if (!_native)
+        ...localMeshService.peers.values.map(
+          (p) => MeshPeerInfo(
+            id: p.id,
+            name: p.name,
+            rssi: -60,
+            transport: 'lan',
+          ),
+        ),
+    ]..sort((a, b) => b.rssi.compareTo(a.rssi));
     final inCall = kinhMeshChannel.wfdState == 'call';
     final bg = survival ? const Color(0xFF0A0E12) : Theme.of(context).scaffoldBackgroundColor;
 
@@ -126,6 +146,20 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Quét lại',
+            onPressed: () async {
+              if (_native) {
+                await kinhMeshChannel.scan();
+              } else {
+                if (!localMeshService.running) await localMeshService.start();
+                localMeshService; // beacon already periodic
+              }
+              setState(() {});
+            },
+            icon: const Icon(Icons.radar),
+          ),
+
           IconButton(
             tooltip: 'SOS nhanh',
             onPressed: () async {
@@ -179,7 +213,7 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
                       Text(
                         kinhMeshChannel.running
                             ? '${peers.length} peer · ${_wfdLabel()}'
-                            : (_native ? 'Mesh tắt' : 'Không có native'),
+                            : (_native ? (kinhMeshChannel.running ? kinhMeshChannel.statusLine : 'Mesh tắt') : 'LAN fallback'),
                         style: TextStyle(
                           fontSize: 12,
                           color: survival ? Colors.white70 : null,
@@ -237,8 +271,10 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
                 ? Center(
                     child: Text(
                       _native
-                          ? 'Đang quét BLE… đưa máy gần nhau'
-                          : 'Cần APK có CI inject mesh',
+                          ? 'Đang quét BLE… đưa máy gần + cấp quyền BT'
+                          : (localMeshService.running
+                              ? 'LAN: ${localMeshService.peers.length} máy (cùng Wi‑Fi/hotspot)'
+                              : 'Bật LAN hoặc cài APK có CI inject mesh'),
                       style: TextStyle(
                         fontSize: 12,
                         color: survival ? Colors.white54 : Colors.white54,

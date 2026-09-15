@@ -7,7 +7,7 @@ class MeshPeerInfo {
   final String id;
   final String name;
   final int rssi;
-  final String transport; // ble | wfd
+  final String transport;
   final DateTime lastSeen;
 
   MeshPeerInfo({
@@ -25,7 +25,6 @@ class MeshPeerInfo {
         transport: '${raw['transport'] ?? 'ble'}',
       );
 
-  /// Ước lượng thô từ RSSI (BLE) — không phải GPS.
   String get distanceLabel {
     if (rssi == 0) return '—';
     if (rssi >= -55) return '~1–3 m';
@@ -35,7 +34,6 @@ class MeshPeerInfo {
   }
 
   double get signal01 {
-    // map -100..-40 → 0..1
     final v = ((rssi + 100) / 60).clamp(0.0, 1.0);
     return v.toDouble();
   }
@@ -50,29 +48,43 @@ class KinhMeshChannel extends ChangeNotifier {
   final incomingText = StreamController<Map<String, String>>.broadcast();
   final callEvents = StreamController<Map<String, dynamic>>.broadcast();
   bool running = false;
+  bool pluginPresent = false;
   String? lastError;
-  String wfdState = 'idle'; // idle | forming | ready | call
+  String wfdState = 'idle';
   String? activeCallPeer;
+  String statusLine = 'Chưa bật';
 
   Future<bool> get isNativeAvailable async {
     if (kIsWeb) return false;
     if (defaultTargetPlatform != TargetPlatform.android) return false;
     try {
-      final v = await _ch.invokeMethod<bool>('isAvailable');
-      return v == true;
-    } catch (_) {
+      final v = await _ch.invokeMethod('isAvailable');
+      pluginPresent = v == true || v is Map;
+      return pluginPresent;
+    } on MissingPluginException {
+      pluginPresent = false;
+      lastError =
+          'Plugin mesh chưa gắn vào APK (CI inject / MainActivity). Dùng Chat gần LAN.';
+      return false;
+    } catch (e) {
+      lastError = '$e';
+      pluginPresent = false;
       return false;
     }
   }
 
   Future<void> start({required String publicId, required String displayName}) async {
     try {
-      await _ch.invokeMethod('start', {
+      final r = await _ch.invokeMethod('start', {
         'publicId': publicId,
         'displayName': displayName,
       });
       running = true;
       lastError = null;
+      statusLine = 'Đang quét BLE…';
+      if (r is Map && '${r['status']}' == 'requesting_permissions') {
+        statusLine = 'Đang xin quyền Bluetooth/Nearby…';
+      }
       _sub ??= _ev.receiveBroadcastStream().listen(_onEvent, onError: (e) {
         lastError = '$e';
         notifyListeners();
@@ -80,12 +92,24 @@ class KinhMeshChannel extends ChangeNotifier {
       notifyListeners();
     } on MissingPluginException {
       lastError =
-          'Native mesh chưa có trong APK — dùng Chat gần (LAN) hoặc build lại sau CI inject.';
+          'Không có native mesh trong APK này. Cần build Android có bước CI inject mesh.';
       running = false;
+      pluginPresent = false;
       notifyListeners();
     } catch (e) {
       lastError = '$e';
       running = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> scan() async {
+    try {
+      await _ch.invokeMethod('scan');
+      statusLine = 'Quét lại…';
+      notifyListeners();
+    } catch (e) {
+      lastError = '$e';
       notifyListeners();
     }
   }
@@ -98,6 +122,7 @@ class KinhMeshChannel extends ChangeNotifier {
     peers.clear();
     wfdState = 'idle';
     activeCallPeer = null;
+    statusLine = 'Đã tắt';
     notifyListeners();
   }
 
@@ -134,6 +159,7 @@ class KinhMeshChannel extends ChangeNotifier {
       case 'peer':
         final p = MeshPeerInfo.fromMap(Map<String, dynamic>.from(e));
         if (p.id.isNotEmpty) peers[p.id] = p;
+        statusLine = '${peers.length} peer BLE';
         break;
       case 'peerLost':
         peers.remove('${e['id']}');
@@ -155,6 +181,10 @@ class KinhMeshChannel extends ChangeNotifier {
           wfdState = 'ready';
           activeCallPeer = null;
         }
+        break;
+      case 'status':
+        statusLine = '${e['state']}';
+        if (statusLine == 'started' || statusLine == 'scanning') running = true;
         break;
       case 'error':
         lastError = '${e['message']}';
