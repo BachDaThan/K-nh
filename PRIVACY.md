@@ -102,3 +102,6 @@ App không nhắm đối tượng trẻ em dưới độ tuổi theo chính sác
 Repo / nhà phát triển: **https://github.com/BachDaThan/K-nh** · **BachDaThan**  
 
 Bản mới nhất của chính sách: file `PRIVACY.md` trên nhánh `main`. Xem thêm `FAQ.md`.
+
+## Store-and-Forward (0.15.0)
+Tin S&F lưu trên máy bạn và có thể nằm trên máy peer trung gian đến khi TTL hết hoặc giao cho người nhận. Không qua server Kính. Chỉ text.

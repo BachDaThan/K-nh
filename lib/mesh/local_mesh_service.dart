@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'mesh_identity.dart';
+import 'store_forward_service.dart';
 
 class MeshPeer {
   final String id;
@@ -27,6 +28,7 @@ class MeshChatLine {
   final String text;
   final DateTime at;
   final bool mine;
+  final bool storeForward;
 
   MeshChatLine({
     required this.fromId,
@@ -34,16 +36,16 @@ class MeshChatLine {
     required this.text,
     required this.at,
     required this.mine,
+    this.storeForward = false,
   });
 }
 
-/// Mesh **rút gọn** (chuẩn + Plus): LAN/hotspot UDP broadcast.
-/// Không internet; cùng Wi‑Fi/hotspot là chat được.
-/// BLE đa hop kiểu Bitchat = bản Premium native (phase 2) — xem docs/.
+/// LAN/hotspot UDP + Store-and-Forward text (TTL hop).
 class LocalMeshService extends ChangeNotifier {
   static const port = 47829;
   RawDatagramSocket? _sock;
   Timer? _beacon;
+  Timer? _sfFlush;
   bool running = false;
   final Map<String, MeshPeer> peers = {};
   final List<MeshChatLine> lines = [];
@@ -52,6 +54,7 @@ class LocalMeshService extends ChangeNotifier {
   Future<void> start() async {
     if (running) return;
     await meshIdentity.loadOrCreate();
+    await storeForwardService.load();
     try {
       _sock = await RawDatagramSocket.bind(
         InternetAddress.anyIPv4,
@@ -64,7 +67,9 @@ class LocalMeshService extends ChangeNotifier {
       running = true;
       lastError = null;
       _beacon = Timer.periodic(const Duration(seconds: 2), (_) => _sendBeacon());
+      _sfFlush = Timer.periodic(const Duration(seconds: 5), (_) => flushStoreForward());
       _sendBeacon();
+      flushStoreForward();
       notifyListeners();
     } catch (e) {
       lastError = '$e';
@@ -75,6 +80,7 @@ class LocalMeshService extends ChangeNotifier {
 
   Future<void> stop() async {
     _beacon?.cancel();
+    _sfFlush?.cancel();
     _sock?.close();
     _sock = null;
     running = false;
@@ -90,18 +96,24 @@ class LocalMeshService extends ChangeNotifier {
       final j = jsonDecode(utf8.decode(dg.data)) as Map<String, dynamic>;
       final type = j['t'] as String?;
       final id = j['id'] as String? ?? '';
-      if (id.isEmpty || id == meshIdentity.publicId) return;
+      if (id.isEmpty || id == meshIdentity.publicId) {
+        // still accept sf from others only
+        if (type != 'sf') return;
+      }
       final name = j['n'] as String? ?? id;
-      peers[id] = MeshPeer(
-        id: id,
-        name: name,
-        address: dg.address,
-        port: dg.port,
-        lastSeen: DateTime.now(),
-      );
+      if (id.isNotEmpty && id != meshIdentity.publicId) {
+        peers[id] = MeshPeer(
+          id: id,
+          name: name,
+          address: dg.address,
+          port: dg.port,
+          lastSeen: DateTime.now(),
+        );
+      }
+
       if (type == 'msg') {
         final text = j['m'] as String? ?? '';
-        if (text.isNotEmpty) {
+        if (text.isNotEmpty && id != meshIdentity.publicId) {
           lines.add(MeshChatLine(
             fromId: id,
             fromName: name,
@@ -111,8 +123,33 @@ class LocalMeshService extends ChangeNotifier {
           ));
           if (lines.length > 200) lines.removeRange(0, lines.length - 200);
         }
+      } else if (type == 'sf') {
+        final payload = j['p'];
+        if (payload is Map) {
+          storeForwardService
+              .onReceive(Map<String, dynamic>.from(payload))
+              .then((show) {
+            if (show) {
+              final p = SfPacket.fromJson(Map<String, dynamic>.from(payload));
+              lines.add(MeshChatLine(
+                fromId: p.fromId,
+                fromName: p.fromName,
+                text: '[S&F] ${p.text}',
+                at: DateTime.now(),
+                mine: false,
+                storeForward: true,
+              ));
+              if (lines.length > 200) {
+                lines.removeRange(0, lines.length - 200);
+              }
+              notifyListeners();
+            }
+            // relay rest of queue
+            flushStoreForward();
+          });
+        }
       }
-      // Drop stale peers
+
       final cut = DateTime.now().subtract(const Duration(seconds: 12));
       peers.removeWhere((_, p) => p.lastSeen.isBefore(cut));
       notifyListeners();
@@ -144,6 +181,45 @@ class LocalMeshService extends ChangeNotifier {
       mine: true,
     ));
     notifyListeners();
+  }
+
+  /// Gửi text qua Store-and-Forward (giữ trên máy + broadcast; peer giữ/relay).
+  Future<void> sendStoreForward(String text, {String? toId, int ttl = 5}) async {
+    final t = text.trim();
+    if (t.isEmpty || !running) return;
+    final p = await storeForwardService.enqueueOutgoing(
+      text: t,
+      toId: toId,
+      ttl: ttl,
+    );
+    _broadcast({
+      't': 'sf',
+      'id': meshIdentity.publicId,
+      'n': meshIdentity.displayName,
+      'p': p.toJson(),
+    });
+    lines.add(MeshChatLine(
+      fromId: p.fromId,
+      fromName: p.fromName,
+      text: '[S&F] $t',
+      at: DateTime.now(),
+      mine: true,
+      storeForward: true,
+    ));
+    notifyListeners();
+  }
+
+  void flushStoreForward() {
+    if (!running) return;
+    for (final p in storeForwardService.packetsToRelay()) {
+      if (p.ttl <= 0) continue;
+      _broadcast({
+        't': 'sf',
+        'id': meshIdentity.publicId,
+        'n': meshIdentity.displayName,
+        'p': p.toJson(),
+      });
+    }
   }
 
   void _broadcast(Map<String, dynamic> map) {

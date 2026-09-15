@@ -165,6 +165,7 @@ class _MeshScreenState extends State<MeshScreen> {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Gửi ngay (LAN)',
                     onPressed: !s.running
                         ? null
                         : () {
@@ -172,6 +173,16 @@ class _MeshScreenState extends State<MeshScreen> {
                             _ctrl.clear();
                           },
                     icon: const Icon(Icons.send),
+                  ),
+                  IconButton(
+                    tooltip: 'Store-and-Forward (giữ + relay khi gặp máy)',
+                    onPressed: !s.running
+                        ? null
+                        : () async {
+                            await s.sendStoreForward(_ctrl.text);
+                            _ctrl.clear();
+                          },
+                    icon: const Icon(Icons.outbox),
                   ),
                 ],
               ),

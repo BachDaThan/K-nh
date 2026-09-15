@@ -1,6 +1,6 @@
 {
-  "version": "0.14.4",
+  "version": "0.15.0",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 045a9f8 (v0.14.4)"
+  "changelog": "Store-and-Forward text on LAN mesh (TTL, queue); SOS uses S&F; docs keep full MD"
 }

@@ -21,7 +21,7 @@ class SosService {
     await p.setString(_msgKey, message);
   }
 
-  /// Gửi qua LAN mesh (nếu đang chạy) + native mesh (nếu có).
+  /// Gửi qua LAN mesh + Store-and-Forward + native mesh (nếu có).
   Future<String> broadcast({String? extra}) async {
     await load();
     final text = extra == null || extra.isEmpty ? message : '$message\n$extra';
@@ -32,11 +32,15 @@ class SosService {
     }
     localMeshService.sendChat('🆘 $text');
     bits.add('LAN broadcast');
+    try {
+      await localMeshService.sendStoreForward('🆘 $text', ttl: 5);
+      bits.add('S&F queue');
+    } catch (_) {}
     if (kinhMeshChannel.running) {
       await kinhMeshChannel.broadcastText('🆘 $text');
       bits.add('Native mesh broadcast');
     } else {
-      bits.add('Native mesh chưa chạy (chỉ LAN nếu có)');
+      bits.add('Native mesh chưa chạy');
     }
     return bits.join(' · ');
   }

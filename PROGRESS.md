@@ -112,7 +112,8 @@ App **vẫn dùng được** toàn bộ nhóm A nếu **không** đăng nhập G
 | 0.14.0 | FAQ, export HTML/MD/CSV, SOS, community setup in-app, low-end rõ |
 | 0.14.1 | Hướng dẫn Cộng đồng **tách 2 nhóm** |
 | 0.14.2 | Khôi phục MD đầy đủ (tránh bản rút gọn) |
-| **0.14.3** | **Fix build:** export notes `_${at}_` (hết lỗi getter `at_`); `settings_sheet` bỏ `subtitle` trùng trên Low-end. CMake Firebase Windows chỉ còn deprecation warning. |
+| **0.15.0** | Store-and-Forward **text** trên LAN mesh (TTL hop, hàng đợi local); SOS enqueue S&F. Không Briar/Nostr/voice multi-hop.
+| 0.14.3 | **Fix build:** export notes `_${at}_` (hết lỗi getter `at_`); `settings_sheet` bỏ `subtitle` trùng trên Low-end. CMake Firebase Windows chỉ còn deprecation warning. |
 
 ---
 
@@ -125,3 +126,11 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 - Không commit `android/` / `windows/` — CI `flutter create` mỗi lần build.  
 - Engine: System WebView (Android) / WebView2 (Windows) qua abstraction `BrowserEngine`.  
 - Không silent-install.
+
+---
+
+## 0.15.0 — Store-and-Forward (phần Gemini làm được)
+
+**Đã làm:** S&F **chỉ tin nhắn chữ** trên mesh LAN (và SOS).
+
+**Cố ý không làm** (Gemini): CouchDB/Briar đầy đủ, Nostr, sóng âm, Li-Fi, DTN NASA đầy đủ, fractal compression, Edge AI routing, FEC/Codec2 multi-hop voice, Wi-Fi Aware sâu, PQC lattice, drone, quantum, bio-mesh.
