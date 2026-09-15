@@ -1,0 +1,22 @@
+{
+  "asOf": "2026-09-01",
+  "currency": "VND",
+  "disclaimer": "Tham khảo — cập nhật thủ công / JSON remote. Không phải giá TGDĐ.",
+  "brands": {
+    "samsung": 4500000,
+    "xiaomi": 3200000,
+    "redmi": 2800000,
+    "oppo": 3000000,
+    "vivo": 2900000,
+    "google": 6000000,
+    "nothing": 5000000
+  },
+  "models": {
+    "sm-s91": 12000000,
+    "sm-a5": 4000000,
+    "pixel 7": 7000000,
+    "pixel 8": 9000000,
+    "2201116sg": 3500000,
+    "m2101k6g": 2800000
+  }
+}

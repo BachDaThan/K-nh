@@ -243,7 +243,7 @@ class _MeshScreenState extends State<MeshScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    await meshIdentity.setDisplayName(_nameCtrl.text.trim());
+                    await meshIdentity.setName(_nameCtrl.text.trim());
                     setState(() {});
                   },
                   child: const Text('Lưu'),

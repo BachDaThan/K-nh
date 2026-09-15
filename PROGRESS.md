@@ -175,3 +175,9 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 - Xin quyền Bluetooth/Nearby/Location/Micro **khi mở Chat offline** (`permission_handler`)
 - Nút mở Cài đặt quyền app (hữu ích **Xiaomi/MIUI** khi không hiện dialog)
 - Samsung thường hiện hộp thoại; Xiaomi hay phải bật tay trong Quyền / Quyền khác
+
+## 0.15.8
+- Fix build: `meshIdentity.setName` (không còn `setDisplayName`)
+- **Định giá thiết bị** (local-first): quét model/OS qua `device_info_plus`, tự chọn ngoại hình + test nhanh, ước lượng VND từ `assets/price_snapshot.json`
+- Không root, không IMEI/serial, không bắt login
+- Giá chỉ **tham khảo**; crawl TGDĐ/Chợ Tốt full server = giai đoạn sau (JSON remote tùy chọn)

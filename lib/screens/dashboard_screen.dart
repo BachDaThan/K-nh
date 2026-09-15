@@ -9,6 +9,7 @@ import '../reader/bookshelf_screen.dart';
 import 'notes_screen.dart';
 import '../chat/screens/chat_hub_screen.dart';
 import '../mesh/mesh_screen.dart';
+import '../device_value/device_value_screen.dart';
 import '../premium/premium_mesh_screen.dart';
 import '../browser/widgets/activity_log_sheet.dart';
 import '../browser/services/activity_log_service.dart';
@@ -260,6 +261,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       accentColor: Color(0xFF26A69A),
     ),
     const BentoItem(
+      id: 'device_value',
+      title: 'Định giá máy',
+      icon: Icons.phonelink_setup,
+      size: BentoSize.small,
+      accentColor: Color(0xFFAB47BC),
+    ),
+    const BentoItem(
       id: 'community_chat',
       title: 'Cộng đồng',
       icon: Icons.forum_outlined,
@@ -332,6 +340,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (item.id == 'premium_mesh') {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const PremiumMeshScreen()),
+      );
+      return;
+    }
+    if (item.id == 'device_value') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const DeviceValueScreen()),
       );
       return;
     }

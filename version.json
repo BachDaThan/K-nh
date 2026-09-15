@@ -1,6 +1,6 @@
 {
-  "version": "0.15.7",
+  "version": "0.15.8",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Request BLE/Nearby permissions on open Chat offline; Xiaomi guidance"
+  "changelog": "Fix setName; device valuation local-first (no IMEI); dashboard tile"
 }
