@@ -1,60 +1,43 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/services.dart';
 
-/// Xin quyền cho mesh offline (BLE / Nearby / Location trên máy cũ).
-/// Xiaomi/MIUI: sau khi app xin, user có thể vẫn phải bật tay trong Cài đặt.
+import '../premium/kinh_mesh_channel.dart';
+
+/// Không dùng `permission_handler` (vỡ build Windows / MSVC coroutine).
 class MeshPermissions {
-  /// Trả về mô tả ngắn kết quả (để hiện SnackBar).
+  static const _ch = MethodChannel('com.bachdathan.kinh/mesh');
+
   static Future<String> ensureForMesh() async {
-    if (kIsWeb || !Platform.isAndroid) {
-      return 'Không cần xin quyền mesh trên nền tảng này';
+    if (kIsWeb) return 'Web: không dùng mesh BLE';
+    if (Platform.isWindows) {
+      return 'Windows: mesh BLE không hỗ trợ; dùng LAN nếu cùng mạng.';
     }
-
-    final need = <Permission>[
-      Permission.bluetooth,
-      Permission.bluetoothScan,
-      Permission.bluetoothConnect,
-      Permission.bluetoothAdvertise,
-      Permission.nearbyWifiDevices,
-      Permission.locationWhenInUse, // Android < 12 / một số OEM
-      Permission.microphone, // gọi 1-hop
-    ];
-
-    final statuses = await need.request();
-
-    final denied = <String>[];
-    final permanent = <String>[];
-
-    void check(Permission p, String label) {
-      final s = statuses[p];
-      if (s == null) return;
-      if (s.isPermanentlyDenied) {
-        permanent.add(label);
-      } else if (s.isDenied || s.isRestricted) {
-        denied.add(label);
-      }
+    if (!Platform.isAndroid) {
+      return 'Nền tảng này không xin quyền BLE trong app.';
     }
-
-    check(Permission.bluetoothScan, 'Bluetooth quét');
-    check(Permission.bluetoothConnect, 'Bluetooth kết nối');
-    check(Permission.bluetoothAdvertise, 'Bluetooth phát');
-    check(Permission.nearbyWifiDevices, 'Thiết bị gần / Wi‑Fi');
-    check(Permission.locationWhenInUse, 'Vị trí (máy cũ / MIUI)');
-    check(Permission.microphone, 'Micro');
-
-    if (permanent.isNotEmpty) {
-      return 'Quyền bị từ chối vĩnh viễn: ${permanent.join(", ")}. '
-          'Mở Cài đặt ứng dụng → Quyền (Xiaomi: còn xem Quyền khác / Quyền đặc biệt).';
+    final ok = await kinhMeshChannel.isNativeAvailable;
+    if (!ok) {
+      return 'APK chưa có native mesh (CI inject). Chỉ LAN. '
+          'Xiaomi: sau khi có APK inject, bật quyền Bluetooth/Thiết bị gần thủ công.';
     }
-    if (denied.isNotEmpty) {
-      return 'Chưa cấp: ${denied.join(", ")}. Bấm Quét lại hoặc mở Cài đặt quyền.';
+    try {
+      await _ch.invokeMethod('requestPermissions');
+    } catch (e) {
+      return 'Không gọi xin quyền: $e — mở Cài đặt quyền app.';
     }
-    return 'Đã xin quyền mesh (Bluetooth / thiết bị gần). '
-        'Xiaomi: nếu vẫn không quét được, vào Cài đặt → Ứng dụng → Kính → '
-        'Quyền → bật Thiết bị gần / Bluetooth thủ công trên CẢ HAI máy.';
+    return 'Đã xin quyền Bluetooth/Nearby (nếu hệ thống hiện dialog). '
+        'Xiaomi: nếu không hiện, Cài đặt → Ứng dụng → Kính → Quyền.';
   }
 
-  static Future<bool> openAppSettingsPage() => openAppSettings();
+  static Future<bool> openAppSettingsPage() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      await _ch.invokeMethod('openAppSettings');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }

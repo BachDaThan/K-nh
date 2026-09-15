@@ -181,3 +181,7 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 - **Định giá thiết bị** (local-first): quét model/OS qua `device_info_plus`, tự chọn ngoại hình + test nhanh, ước lượng VND từ `assets/price_snapshot.json`
 - Không root, không IMEI/serial, không bắt login
 - Giá chỉ **tham khảo**; crawl TGDĐ/Chợ Tốt full server = giai đoạn sau (JSON remote tùy chọn)
+
+## 0.15.9
+- **Gỡ `permission_handler`** — plugin Windows lỗi MSVC `_SILENCE_EXPERIMENTAL_COROUTINE` / STL1011
+- Xin quyền mesh: **native Android** (`MeshPlugin` + `openAppSettings`)

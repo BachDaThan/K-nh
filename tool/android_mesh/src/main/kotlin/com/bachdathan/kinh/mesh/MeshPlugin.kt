@@ -63,6 +63,24 @@ class MeshPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, EventChannel.
     val ctx = appContext
     when (call.method) {
       "isAvailable" -> result.success(true)
+      "requestPermissions" -> {
+        requestPerms()
+        result.success(mapOf("status" to "requesting_permissions"))
+      }
+      "openAppSettings" -> {
+        val c = appContext
+        if (c == null) {
+          result.error("ctx", "no context", null)
+          return
+        }
+        val i = android.content.Intent(
+          android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+          android.net.Uri.fromParts("package", c.packageName, null),
+        )
+        i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        c.startActivity(i)
+        result.success(true)
+      }
       "start" -> {
         if (ctx == null) {
           result.error("ctx", "no context", null)
