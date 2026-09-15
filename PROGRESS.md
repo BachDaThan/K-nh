@@ -142,3 +142,11 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 - `tool/firebase_rtdb_rules.json`: root cấm; chat/presence chỉ `auth != null`; ghi đúng uid; text ≤ 2000.
 - `docs/FIREBASE_RULES.md`: cách Publish rules + siết API key.
 - `docs/ANDROID_KEY_ROTATION.md`: Signature v3/v4, lineage, SHA Firebase, secrets CI khi **đổi** keystore — **dự phòng**, không bắt buộc mỗi build.
+
+---
+
+## 0.15.2 — DNS bảo mật (DoH) UI kiểu Android
+
+- Bật/tắt + preset: Cloudflare, Google, OpenDNS, CleanBrowsing Family, AdGuard, Cloudflare Family
+- Tùy chỉnh URL DoH (NextDNS / self-hosted…)
+- **Giới hạn:** System WebView không đổi Private DNS toàn máy; muốn DNS cả máy → Cài đặt Android. App lưu lựa chọn DoH trong Kính.

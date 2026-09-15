@@ -59,9 +59,13 @@ class _SettingsSheetState extends State<SettingsSheet> {
     adblockService.load().then((_) { if (mounted) setState(() {}); });
     webCosmeticsService.load().then((_) { if (mounted) setState(() {}); });
     readerSettings.load().then((_) { if (mounted) setState(() {}); });
-    _dohSelectedId = widget.dohService.current.id;
-    if (widget.dohService.current.isCustom) {
-      _customDohController.text = widget.dohService.current.url;
+    if (!widget.dohService.enabled) {
+      _dohSelectedId = 'system';
+    } else {
+      _dohSelectedId = widget.dohService.current.id;
+      if (widget.dohService.current.isCustom) {
+        _customDohController.text = widget.dohService.current.url;
+      }
     }
   }
 
@@ -170,145 +174,104 @@ class _SettingsSheetState extends State<SettingsSheet> {
 
             const Divider(height: 32),
 
-            // DoH
-            const Text('DNS-over-HTTPS (DoH)',
-                style: TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            ...DohProvider.presets.map((p) {
-              return RadioListTile<String>(
-                dense: true,
-                title: Text(p.name, style: const TextStyle(fontSize: 14)),
-                value: p.id,
+
+            // DoH — UI kiểu "DNS bảo mật" Android (Private DNS)
+            const Text('DNS bảo mật (DoH trong app)',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+            const SizedBox(height: 4),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Sử dụng DNS bảo mật'),
+              subtitle: const Text(
+                'Chọn nhà cung cấp DoH trong app (không đổi DNS toàn máy)',
+              ),
+              value: widget.dohService.enabled,
+              onChanged: (v) async {
+                await widget.dohService.setEnabled(v);
+                setState(() {});
+                widget.onChanged();
+              },
+            ),
+            if (widget.dohService.enabled) ...[
+              RadioListTile<String>(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Theo DNS máy (không ép DoH app)'),
+                subtitle: const Text('Giống “nhà cung cấp hiện tại” trên Android'),
+                value: 'system',
                 groupValue: _dohSelectedId,
                 onChanged: (_) async {
-                  setState(() => _dohSelectedId = p.id);
-                  await widget.dohService.setProvider(p);
+                  setState(() => _dohSelectedId = 'system');
+                  await widget.dohService.setEnabled(false);
+                  setState(() {});
                   widget.onChanged();
                 },
-                activeColor: const Color(0xFF6C8CFF),
-                selected: _dohSelectedId == p.id,
-              );
-            }),
-            RadioListTile<String>(
-              dense: true,
-              title: const Text('DoH tùy chỉnh (NextDNS / AdGuard Home...)',
-                  style: TextStyle(fontSize: 14)),
-              value: 'custom',
-              groupValue: _dohSelectedId,
-              onChanged: (_) {
-                // Bật chế độ custom ngay — hiện ô nhập URL
-                setState(() => _dohSelectedId = 'custom');
-              },
-              activeColor: const Color(0xFF6C8CFF),
-              selected: _dohSelectedId == 'custom',
-            ),
-            if (_dohSelectedId == 'custom')
-              Padding(
-                padding: const EdgeInsets.only(left: 16, right: 8, bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _customDohController,
-                            style: const TextStyle(fontSize: 13),
-                            decoration: const InputDecoration(
-                              hintText: 'dns.nextdns.io/xxxxx hoặc https://...',
-                              isDense: true,
-                              border: OutlineInputBorder(),
-                            ),
-                            onSubmitted: (_) => _saveCustomDoh(),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: _saveCustomDoh,
-                          child: const Text('Lưu'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Có thể dán không có https:// — app tự thêm. '
-                      'Preset + URL được lưu trên máy.',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withOpacity(0.45)),
-                    ),
-                  ],
-                ),
               ),
-            const SizedBox(height: 8),
-            Text(
-              'Lưu ý: System WebView chưa đổi DNS thật của máy (giới hạn OS). '
-              'Kính vẫn lưu lựa chọn DoH; inject network thật khi có GeckoView.',
-              style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4)),
+              const Padding(
+                padding: EdgeInsets.only(top: 4, bottom: 4),
+                child: Text('Chọn nhà cung cấp khác',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+              ),
+              ...DohProvider.presets.map((p) {
+                return RadioListTile<String>(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(p.name),
+                  subtitle: p.subtitle != null ? Text(p.subtitle!) : null,
+                  value: p.id,
+                  groupValue: _dohSelectedId,
+                  onChanged: (id) async {
+                    if (id == null) return;
+                    setState(() => _dohSelectedId = id);
+                    await widget.dohService.setEnabled(true);
+                    await widget.dohService.setProvider(p);
+                    widget.onChanged();
+                    setState(() {});
+                  },
+                  selected: _dohSelectedId == p.id,
+                );
+              }),
+              RadioListTile<String>(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Tùy chỉnh'),
+                subtitle: const Text('URL của nhà cung cấp (DoH)'),
+                value: 'custom',
+                groupValue: _dohSelectedId,
+                onChanged: (_) {
+                  setState(() => _dohSelectedId = 'custom');
+                },
+                selected: _dohSelectedId == 'custom',
+              ),
+              if (_dohSelectedId == 'custom')
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _customDohController,
+                          decoration: const InputDecoration(
+                            labelText: 'URL DoH',
+                            hintText: 'https://dns.nextdns.io/...',
+                            isDense: true,
+                            border: OutlineInputBorder(),
+                          ),
+                          onSubmitted: (_) => _saveCustomDoh(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: _saveCustomDoh,
+                        child: const Text('Lưu'),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+            const Text(
+              'Khác Private DNS hệ thống (DoT toàn máy): System WebView vẫn '
+              'phân giải DNS theo máy. Muốn DNS cho cả điện thoại → Cài đặt Android '
+              '→ Mạng → DNS bảo mật. Kính lưu DoH để UI thống nhất / engine sau này.',
+              style: TextStyle(fontSize: 11),
             ),
-
-            const Divider(height: 32),
-
-            SwitchListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Ad-block nhẹ'),
-              subtitle: const Text('Chặn host quảng cáo phổ biến'),
-              value: adblockService.enabled,
-              onChanged: (v) async {
-                await adblockService.setEnabled(v);
-                setState(() {});
-                widget.onChanged();
-              },
-            ),
-            SwitchListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Ad-block nâng cao'),
-              subtitle: const Text('Thêm tracker + ẩn CSS quảng cáo'),
-              value: webCosmeticsService.advancedAdblock,
-              onChanged: (v) async {
-                await webCosmeticsService.setAdvancedAdblock(v);
-                setState(() {});
-                widget.onChanged();
-              },
-            ),
-            SwitchListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Tối trang web (Dark)'),
-              value: webCosmeticsService.webDarkMode,
-              onChanged: (v) async {
-                await webCosmeticsService.setWebDarkMode(v);
-                setState(() {});
-                widget.onChanged();
-              },
-            ),
-            SwitchListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: const Text('TTS khi mở Reader'),
-              value: readerSettings.ttsEnabled,
-              onChanged: (v) async {
-                readerSettings.ttsEnabled = v;
-                await readerSettings.save();
-                setState(() {});
-              },
-            ),
-            SwitchListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: const Text('TTS tự sang chương sau'),
-              subtitle: const Text('Hết đoạn → tìm link Next / Chương sau'),
-              value: readerSettings.ttsAutoNext,
-              onChanged: (v) async {
-                readerSettings.ttsAutoNext = v;
-                await readerSettings.save();
-                setState(() {});
-              },
-            ),
-            const Divider(height: 20),
-            const Text('Máy tìm kiếm (Omnibox)',
                 style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
             ...SearchEngineService.engines.map((e) {

@@ -1,6 +1,6 @@
 {
-  "version": "0.15.1",
+  "version": "0.15.2",
   "apk_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh.apk",
   "exe_url": "https://github.com/BachDaThan/K-nh/releases/download/latest/Kinh-Windows.zip",
-  "changelog": "Bản build tự động từ commit 1dfbdd8 (v0.15.1)"
+  "changelog": "DoH UI like Android Private DNS: presets OpenDNS/CleanBrowsing + custom URL; honest OS limit"
 }
