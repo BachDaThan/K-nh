@@ -124,6 +124,12 @@ jobs:
       - name: Tải dependencies
         run: flutter pub get
 
+      - name: Kiểm tra chất lượng Dart
+        run: flutter analyze --fatal-infos
+
+      - name: Chạy test Flutter
+        run: flutter test
+
       - name: Cấu hình ký release APK (KEYSTORE secrets)
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
