@@ -41,8 +41,8 @@
         ".read": "auth != null && ($pairId.contains(auth.uid) || root.child('dmAccess').child($pairId).child(auth.uid).val() == true)",
         "messages": {
           "$msgId": {
-            ".write": "auth != null && newData.child('uid').val() == auth.uid && (!data.exists() || data.child('uid').val() == auth.uid)",
-            ".validate": "newData.hasChildren(['uid', 'text', 'at']) && newData.child('text').isString() && newData.child('text').val().length <= 2000 && newData.child('at').isNumber()"
+            ".write": "auth != null && ($pairId.contains(auth.uid) || root.child('dmAccess').child($pairId).child(auth.uid).val() == true) && newData.child('uid').val() == auth.uid && (!data.exists() || data.child('uid').val() == auth.uid)",
+            ".validate": "newData.hasChildren(['uid', 'text', 'at']) && newData.child('uid').val() == auth.uid && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && newData.child('at').isNumber()"
           }
         }
       }
@@ -60,7 +60,7 @@
       "$uid": {
         ".read": "auth != null",
         ".write": "auth != null && auth.uid == $uid",
-        ".validate": "newData.child('publicId').isString() && newData.child('publicId').val().length <= 32"
+        ".validate": "newData.child('publicId').isString() && newData.child('publicId').val().length <= 32 && (!newData.child('rank').exists() || newData.child('rank').val() == 'member' || newData.child('rank').val() == data.child('rank').val())"
       }
     }
   }
