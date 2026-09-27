@@ -185,3 +185,6 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 ## 0.15.9
 - **Gỡ `permission_handler`** — plugin Windows lỗi MSVC `_SILENCE_EXPERIMENTAL_COROUTINE` / STL1011
 - Xin quyền mesh: **native Android** (`MeshPlugin` + `openAppSettings`)
+
+## 0.15.10
+- **Bản build mới** — bump version `0.15.10+60` sau bản 0.15.9, tái build APK/EXE qua GitHub Actions (không đổi tính năng)
