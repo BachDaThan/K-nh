@@ -202,7 +202,7 @@ class _StoryAudioScreenState extends State<StoryAudioScreen> {
           const Divider(height: 28),
           const Text('Giọng đọc (máy)', style: TextStyle(fontWeight: FontWeight.w600)),
           DropdownButtonFormField<String>(
-            value: _voiceName,
+            initialValue: _voiceName,
             isExpanded: true,
             items: _voices
                 .map(
@@ -281,10 +281,8 @@ class _StoryAudioScreenState extends State<StoryAudioScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: musicPlaylist.tracks.length,
-              onReorder: (a, b) async {
-                var to = b;
-                if (to > a) to -= 1;
-                await musicPlaylist.move(a, to);
+              onReorderItem: (a, b) async {
+                await musicPlaylist.move(a, b);
                 setState(() {});
               },
               itemBuilder: (ctx, i) {

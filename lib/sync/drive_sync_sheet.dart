@@ -166,7 +166,7 @@ class _DriveSyncSheetState extends State<DriveSyncSheet> {
                                 _msg = 'Không thấy file JSON trên Drive';
                                 return;
                               }
-                              if (!mounted) return;
+                              if (!context.mounted) return;
                               final pick = await showDialog<DriveFileItem>(
                                 context: context,
                                 builder: (c) => SimpleDialog(

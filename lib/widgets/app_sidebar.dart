@@ -29,7 +29,7 @@ class AppSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Material(
-      color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.95),
+      color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
       child: SafeArea(
         child: SizedBox(
           width: 72,
@@ -101,7 +101,7 @@ class AppSidebar extends StatelessWidget {
                   'Kính',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.white.withOpacity(0.35),
+                    color: Colors.white.withValues(alpha: 0.35),
                   ),
                 ),
               ),
@@ -163,16 +163,16 @@ class _NavIcon extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: selected
-                      ? color.withOpacity(0.28)
-                      : Colors.white.withOpacity(0.07),
+                      ? color.withValues(alpha: 0.28)
+                      : Colors.white.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: selected ? color.withOpacity(0.65) : Colors.white10,
+                    color: selected ? color.withValues(alpha: 0.65) : Colors.white10,
                   ),
                   boxShadow: selected
                       ? [
                           BoxShadow(
-                            color: color.withOpacity(0.45),
+                            color: color.withValues(alpha: 0.45),
                             blurRadius: 14,
                             spreadRadius: 0,
                           ),
@@ -196,7 +196,7 @@ class _NavIcon extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 9,
-                  color: Colors.white.withOpacity(0.65),
+                  color: Colors.white.withValues(alpha: 0.65),
                 ),
               ),
             ],

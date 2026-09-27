@@ -649,7 +649,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
                     ),
 
                   Material(
-                    color: Theme.of(context).colorScheme.surface.withOpacity(0.95),
+                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
                     child: SizedBox(
                       height: 36,
                       child: Row(

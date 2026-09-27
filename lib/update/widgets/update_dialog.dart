@@ -34,7 +34,7 @@ Future<void> showUpdateDialogIfNeeded(
               info.body!.trim(),
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
               ),
               maxLines: 5,
               overflow: TextOverflow.ellipsis,
@@ -46,7 +46,7 @@ Future<void> showUpdateDialogIfNeeded(
             'cài ngầm.',
             style: TextStyle(
               fontSize: 11,
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
             ),
           ),
         ],

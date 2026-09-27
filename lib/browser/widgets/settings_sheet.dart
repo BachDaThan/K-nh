@@ -130,7 +130,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
             Text(
               'Engine: Chromium / System WebView · WebView2\n'
               'GeckoView trial đã gỡ (xung đột plugin).',
-              style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
+              style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5)),
             ),
             const Divider(height: 32),
 
@@ -163,11 +163,11 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 widget.onOpenPrivacy?.call();
               },
             ),
-            ListTile(
+            const ListTile(
               dense: true,
-              leading: const Icon(Icons.visibility_off, size: 20),
-              title: const Text('Tab ẩn danh'),
-              subtitle: const Text('Nút mắt trên thanh tab — không ghi lịch sử',
+              leading: Icon(Icons.visibility_off, size: 20),
+              title: Text('Tab ẩn danh'),
+              subtitle: Text('Nút mắt trên thanh tab — không ghi lịch sử',
                   style: TextStyle(fontSize: 11)),
               onTap: null,
             ),
@@ -211,52 +211,58 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 widget.onChanged();
               },
             ),
-            RadioListTile<String>(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Theo DNS máy'),
-              subtitle: const Text('Không ép DoH trong app'),
-              value: 'system',
+            RadioGroup<String>(
               groupValue: _dohSelectedId,
-              onChanged: (_) async {
-                setState(() => _dohSelectedId = 'system');
-                await widget.dohService.setEnabled(false);
+              onChanged: (id) async {
+                if (id == null) return;
+                setState(() => _dohSelectedId = id);
+                if (id == 'custom') {
+                  return;
+                }
+                if (id == 'system') {
+                  await widget.dohService.setEnabled(false);
+                } else {
+                  final p = DohProvider.presets.firstWhere(
+                    (e) => e.id == id,
+                    orElse: () => DohProvider.presets.first,
+                  );
+                  await widget.dohService.setEnabled(true);
+                  await widget.dohService.setProvider(p);
+                }
                 setState(() {});
                 widget.onChanged();
               },
-            ),
-            const Padding(
-              padding: EdgeInsets.only(top: 4, bottom: 4),
-              child: Text(
-                'Chọn nhà cung cấp khác',
-                style: TextStyle(fontWeight: FontWeight.w500),
+              child: Column(
+                children: [
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Theo DNS máy'),
+                    subtitle: const Text('Không ép DoH trong app'),
+                    value: 'system',
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4, bottom: 4),
+                    child: Text(
+                      'Chọn nhà cung cấp khác',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                  ...DohProvider.presets.map((p) {
+                    return RadioListTile<String>(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(p.name),
+                      subtitle: p.subtitle != null ? Text(p.subtitle!) : null,
+                      value: p.id,
+                    );
+                  }),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Tùy chỉnh'),
+                    subtitle: const Text('URL của nhà cung cấp (DoH)'),
+                    value: 'custom',
+                  ),
+                ],
               ),
-            ),
-            ...DohProvider.presets.map((p) {
-              return RadioListTile<String>(
-                contentPadding: EdgeInsets.zero,
-                title: Text(p.name),
-                subtitle: p.subtitle != null ? Text(p.subtitle!) : null,
-                value: p.id,
-                groupValue: _dohSelectedId,
-                onChanged: (id) async {
-                  if (id == null) return;
-                  setState(() => _dohSelectedId = id);
-                  await widget.dohService.setEnabled(true);
-                  await widget.dohService.setProvider(p);
-                  widget.onChanged();
-                  setState(() {});
-                },
-              );
-            }),
-            RadioListTile<String>(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Tùy chỉnh'),
-              subtitle: const Text('URL của nhà cung cấp (DoH)'),
-              value: 'custom',
-              groupValue: _dohSelectedId,
-              onChanged: (_) {
-                setState(() => _dohSelectedId = 'custom');
-              },
             ),
             if (_dohSelectedId == 'custom')
               Padding(
@@ -295,20 +301,26 @@ class _SettingsSheetState extends State<SettingsSheet> {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
-            ...SearchEngineService.engines.map((e) {
-              return RadioListTile<String>(
-                dense: true,
-                title: Text(e.name, style: const TextStyle(fontSize: 14)),
-                value: e.id,
-                groupValue: _engineId,
-                onChanged: (v) async {
-                  if (v == null) return;
-                  setState(() => _engineId = v);
-                  await searchEngineService.setEngine(v);
-                  widget.onChanged();
-                },
-              );
-            }),
+            RadioGroup<String>(
+              groupValue: _engineId,
+              onChanged: (v) async {
+                if (v == null) return;
+                setState(() => _engineId = v);
+                await searchEngineService.setEngine(v);
+                widget.onChanged();
+              },
+              child: Column(
+                children: [
+                  ...SearchEngineService.engines.map((e) {
+                    return RadioListTile<String>(
+                      dense: true,
+                      title: Text(e.name, style: const TextStyle(fontSize: 14)),
+                      value: e.id,
+                    );
+                  }),
+                ],
+              ),
+            ),
             const Divider(height: 24),
 
             // Search Diversity
@@ -333,7 +345,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
             ),
             Text(
               '0.0 = chỉ .gov/.edu/Wikipedia/báo lớn  ·  0.5 = tiêu chuẩn  ·  >1.0 = ngách/blog/forum',
-              style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4)),
+              style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.4)),
             ),
 
             const Divider(height: 32),
@@ -382,7 +394,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
               onTap: () async {
                 await widget.engine.clearCookies();
                 await widget.engine.clearCache();
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Đã xóa cookie và cache'),
@@ -421,43 +433,37 @@ class _SettingsSheetState extends State<SettingsSheet> {
             const Text('Duyệt web an toàn', style: TextStyle(fontWeight: FontWeight.w600)),
             Text(
               '3 mức kiểu Chrome — chặn local, không gửi URL lên Google.',
-              style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
+              style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5)),
             ),
-            RadioListTile<SafeBrowsingLevel>(
-              dense: true,
-              title: const Text('Bảo vệ nâng cao'),
-              subtitle: const Text('Siết host/TLD/IP/đuôi file nguy hiểm'),
-              value: SafeBrowsingLevel.enhanced,
+            RadioGroup<SafeBrowsingLevel>(
               groupValue: safeBrowsingService.level,
               onChanged: (v) async {
                 if (v == null) return;
                 await safeBrowsingService.setLevel(v);
                 setState(() {});
               },
-            ),
-            RadioListTile<SafeBrowsingLevel>(
-              dense: true,
-              title: const Text('Bảo vệ tiêu chuẩn'),
-              subtitle: const Text('Chặn host độc hại đã biết'),
-              value: SafeBrowsingLevel.standard,
-              groupValue: safeBrowsingService.level,
-              onChanged: (v) async {
-                if (v == null) return;
-                await safeBrowsingService.setLevel(v);
-                setState(() {});
-              },
-            ),
-            RadioListTile<SafeBrowsingLevel>(
-              dense: true,
-              title: const Text('Không bảo vệ'),
-              subtitle: const Text('Không khuyến nghị'),
-              value: SafeBrowsingLevel.off,
-              groupValue: safeBrowsingService.level,
-              onChanged: (v) async {
-                if (v == null) return;
-                await safeBrowsingService.setLevel(v);
-                setState(() {});
-              },
+              child: Column(
+                children: [
+                  RadioListTile<SafeBrowsingLevel>(
+                    dense: true,
+                    title: const Text('Bảo vệ nâng cao'),
+                    subtitle: const Text('Siết host/TLD/IP/đuôi file nguy hiểm'),
+                    value: SafeBrowsingLevel.enhanced,
+                  ),
+                  RadioListTile<SafeBrowsingLevel>(
+                    dense: true,
+                    title: const Text('Bảo vệ tiêu chuẩn'),
+                    subtitle: const Text('Chặn host độc hại đã biết'),
+                    value: SafeBrowsingLevel.standard,
+                  ),
+                  RadioListTile<SafeBrowsingLevel>(
+                    dense: true,
+                    title: const Text('Không bảo vệ'),
+                    subtitle: const Text('Không khuyến nghị'),
+                    value: SafeBrowsingLevel.off,
+                  ),
+                ],
+              ),
             ),
             const Divider(),
             SwitchListTile(

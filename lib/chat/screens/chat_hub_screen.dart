@@ -200,8 +200,8 @@ class _ChatHubScreenState extends State<ChatHubScreen>
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             color: signed
-                ? const Color(0xFF1B5E20).withOpacity(0.35)
-                : const Color(0xFF4A148C).withOpacity(0.25),
+                ? const Color(0xFF1B5E20).withValues(alpha: 0.35)
+                : const Color(0xFF4A148C).withValues(alpha: 0.25),
             child: Text(
               signed
                   ? '✅ ${chatService.displayName} #${chatService.nameOrdinal} · ID ${chatService.publicId} · 🟢 ${online.length} online'

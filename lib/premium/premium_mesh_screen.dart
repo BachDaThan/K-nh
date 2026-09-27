@@ -294,7 +294,7 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
               decoration: BoxDecoration(
                 color: survival
                     ? const Color(0xFF121A22)
-                    : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.35),
+                    : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: survival
@@ -332,7 +332,7 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
                             decoration: BoxDecoration(
                               color: m.mine
                                   ? const Color(0xFF1B5E20)
-                                  : const Color(0xFF1A237E).withOpacity(0.55),
+                                  : const Color(0xFF1A237E).withValues(alpha: 0.55),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
@@ -401,10 +401,10 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       color: err != null
-          ? Colors.red.shade900.withOpacity(0.5)
+          ? Colors.red.shade900.withValues(alpha: 0.5)
           : (survival
               ? const Color(0xFF0D2818)
-              : Theme.of(context).colorScheme.primaryContainer.withOpacity(0.25)),
+              : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.25)),
       child: Text(
         err ??
             'Bạn: ${meshIdentity.displayName} · ${meshIdentity.publicId} · '
@@ -477,14 +477,14 @@ class _PremiumMeshScreenState extends State<PremiumMeshScreen>
                       const Color(0xFF0E1A14),
                     ]
                   : [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.25),
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
                       Theme.of(context).colorScheme.surface,
                     ],
             ),
             boxShadow: sel
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF69F0AE).withOpacity(0.35),
+                      color: const Color(0xFF69F0AE).withValues(alpha: 0.35),
                       blurRadius: 12,
                     ),
                   ]
@@ -621,14 +621,14 @@ class _RadarPainter extends CustomPainter {
       final paint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..color = base.withOpacity(0.15 * i);
+        ..color = base.withValues(alpha: 0.15 * i);
       canvas.drawCircle(c, maxR * (i / 3), paint);
     }
     final sweep = Paint()
       ..shader = SweepGradient(
         colors: [
-          base.withOpacity(0.0),
-          base.withOpacity(0.35),
+          base.withValues(alpha: 0.0),
+          base.withValues(alpha: 0.35),
         ],
         transform: GradientRotation(progress * math.pi * 2),
       ).createShader(Rect.fromCircle(center: c, radius: maxR));

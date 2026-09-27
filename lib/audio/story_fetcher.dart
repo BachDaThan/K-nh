@@ -63,10 +63,10 @@ class StoryFetcher {
   static String _content(String html) {
     // Ưu tiên khối truyện phổ biến
     final patterns = [
-      r'id=["'']chapter-c["''][^>]*>([\s\S]*?)</div>',
-      r'id=["'']chapter-content["''][^>]*>([\s\S]*?)</div>',
-      r'class=["''][^"'']*chapter-content[^"'']*["''][^>]*>([\s\S]*?)</div>',
-      r'class=["''][^"'']*content[^"'']*["''][^>]*>([\s\S]*?)</div>',
+      r'''id=["']chapter-c["'][^>]*>([\s\S]*?)</div>''',
+      r'''id=["']chapter-content["'][^>]*>([\s\S]*?)</div>''',
+      r'''class=["'][^"']*chapter-content[^"']*["'][^>]*>([\s\S]*?)</div>''',
+      r'''class=["'][^"']*content[^"']*["'][^>]*>([\s\S]*?)</div>''',
       r'<article[^>]*>([\s\S]*?)</article>',
     ];
     for (final p in patterns) {

@@ -72,14 +72,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                _rankColor(m.rank).withOpacity(0.9),
-                _rankColor(m.rank).withOpacity(0.4),
+                _rankColor(m.rank).withValues(alpha: 0.9),
+                _rankColor(m.rank).withValues(alpha: 0.4),
               ],
             ),
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: _rankColor(m.rank).withOpacity(0.45),
+                color: _rankColor(m.rank).withValues(alpha: 0.45),
                 blurRadius: 6,
               ),
             ],

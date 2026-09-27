@@ -77,7 +77,7 @@ class ThemeService {
       colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: brightness),
       fontFamily: 'Roboto',
       appBarTheme: AppBarTheme(
-        backgroundColor: bg.withOpacity(0.92),
+        backgroundColor: bg.withValues(alpha: 0.92),
         elevation: 0,
         foregroundColor:
             brightness == Brightness.dark ? Colors.white : Colors.black87,
