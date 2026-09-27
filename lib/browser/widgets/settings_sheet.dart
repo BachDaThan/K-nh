@@ -234,10 +234,10 @@ class _SettingsSheetState extends State<SettingsSheet> {
               },
               child: Column(
                 children: [
-                  RadioListTile<String>(
+                  const RadioListTile<String>(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Theo DNS máy'),
-                    subtitle: const Text('Không ép DoH trong app'),
+                    title: Text('Theo DNS máy'),
+                    subtitle: Text('Không ép DoH trong app'),
                     value: 'system',
                   ),
                   const Padding(
@@ -255,10 +255,10 @@ class _SettingsSheetState extends State<SettingsSheet> {
                       value: p.id,
                     );
                   }),
-                  RadioListTile<String>(
+                  const RadioListTile<String>(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Tùy chỉnh'),
-                    subtitle: const Text('URL của nhà cung cấp (DoH)'),
+                    title: Text('Tùy chỉnh'),
+                    subtitle: Text('URL của nhà cung cấp (DoH)'),
                     value: 'custom',
                   ),
                 ],
@@ -442,24 +442,24 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 await safeBrowsingService.setLevel(v);
                 setState(() {});
               },
-              child: Column(
+              child: const Column(
                 children: [
                   RadioListTile<SafeBrowsingLevel>(
                     dense: true,
-                    title: const Text('Bảo vệ nâng cao'),
-                    subtitle: const Text('Siết host/TLD/IP/đuôi file nguy hiểm'),
+                    title: Text('Bảo vệ nâng cao'),
+                    subtitle: Text('Siết host/TLD/IP/đuôi file nguy hiểm'),
                     value: SafeBrowsingLevel.enhanced,
                   ),
                   RadioListTile<SafeBrowsingLevel>(
                     dense: true,
-                    title: const Text('Bảo vệ tiêu chuẩn'),
-                    subtitle: const Text('Chặn host độc hại đã biết'),
+                    title: Text('Bảo vệ tiêu chuẩn'),
+                    subtitle: Text('Chặn host độc hại đã biết'),
                     value: SafeBrowsingLevel.standard,
                   ),
                   RadioListTile<SafeBrowsingLevel>(
                     dense: true,
-                    title: const Text('Không bảo vệ'),
-                    subtitle: const Text('Không khuyến nghị'),
+                    title: Text('Không bảo vệ'),
+                    subtitle: Text('Không khuyến nghị'),
                     value: SafeBrowsingLevel.off,
                   ),
                 ],
