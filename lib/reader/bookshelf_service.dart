@@ -40,9 +40,17 @@ class BookshelfService {
     final raw = p.getString(_key);
     books.clear();
     if (raw == null) return;
-    final list = jsonDecode(raw) as List;
-    for (final e in list) {
-      books.add(BookEntry.fromJson(e as Map<String, dynamic>));
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return;
+      for (final e in decoded) {
+        if (e is! Map) continue;
+        try {
+          books.add(BookEntry.fromJson(Map<String, dynamic>.from(e)));
+        } catch (_) {}
+      }
+    } catch (_) {
+      // Dữ liệu sách hỏng không được làm crash màn hình đọc.
     }
   }
 

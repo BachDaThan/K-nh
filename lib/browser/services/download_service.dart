@@ -16,10 +16,17 @@ class DownloadService {
     final raw = prefs.getString(_key);
     _items.clear();
     if (raw != null) {
-      final list = jsonDecode(raw) as List<dynamic>;
-      _items.addAll(
-        list.map((e) => DownloadItem.fromJson(e as Map<String, dynamic>)),
-      );
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          for (final e in decoded) {
+            if (e is! Map) continue;
+            try {
+              _items.add(DownloadItem.fromJson(Map<String, dynamic>.from(e)));
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
     }
   }
 
