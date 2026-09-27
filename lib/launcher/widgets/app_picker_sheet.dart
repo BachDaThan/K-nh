@@ -122,7 +122,7 @@ class _AppPickerSheetState extends State<AppPickerSheet> {
                     prefixIcon:
                         const Icon(Icons.search, color: Colors.white38),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.06),
+                    fillColor: Colors.white.withValues(alpha: 0.06),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,

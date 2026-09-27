@@ -286,8 +286,6 @@ class ChromiumBrowserEngine implements BrowserEngine {
     }
   }
 
-  @override
-
   Future<bool> findInPage(String tabId, String query, {bool forward = true}) async {
     final c = _controllers[tabId];
     if (c == null || query.trim().isEmpty) return false;
@@ -295,11 +293,7 @@ class ChromiumBrowserEngine implements BrowserEngine {
         .replaceAll(r'\\', r'\\\\')
         .replaceAll("'", r"\\'");
     final back = forward ? 'false' : 'true';
-    final js = "(function(){ try { return window.find('" +
-        escaped +
-        "', false, " +
-        back +
-        ", true, false, false, false); } catch(e) { return false; } })()";
+    final js = "(function(){ try { return window.find('$escaped', false, $back, true, false, false, false); } catch(e) { return false; } })()";
     final result = await c.runJavaScriptReturningResult(js);
     return result == true || result.toString() == 'true';
   }
@@ -355,6 +349,7 @@ class ChromiumBrowserEngine implements BrowserEngine {
     await c.runJavaScript(js);
   }
 
+  @override
   Future<void> disposeTab(String tabId) async {
     _controllers.remove(tabId);
     _zoomLevels.remove(tabId);

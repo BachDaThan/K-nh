@@ -141,7 +141,7 @@ class Omnibox extends StatelessWidget {
           child: SizedBox(
             height: 44,
             child: Material(
-              color: Colors.white.withOpacity(0.08),
+              color: Colors.white.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(22),
               child: Row(
                 children: [

@@ -339,7 +339,7 @@ async function runCode(lang, code) {
               const SizedBox(height: 8),
               Text(
                 'OpenAI-compatible: OpenAI, Groq, OpenRouter, LM Studio…',
-                style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
+                style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5)),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -426,6 +426,7 @@ async function runCode(lang, code) {
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () async {
                                 await _snippets.remove(s.id);
+                                if (!ctx.mounted) return;
                                 Navigator.pop(ctx);
                                 setState(() {});
                               },

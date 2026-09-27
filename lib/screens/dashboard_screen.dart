@@ -592,10 +592,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6C8CFF).withOpacity(0.12),
+                          color: const Color(0xFF6C8CFF).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: const Color(0xFF6C8CFF).withOpacity(0.3),
+                            color: const Color(0xFF6C8CFF).withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(

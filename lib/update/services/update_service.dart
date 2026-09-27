@@ -145,11 +145,8 @@ class UpdateService {
     try {
       final result = await Connectivity().checkConnectivity();
       // connectivity_plus >=6.0 trả về List<ConnectivityResult>
-      if (result is List<ConnectivityResult>) {
-        return result.contains(ConnectivityResult.wifi) ||
-            result.contains(ConnectivityResult.ethernet);
-      }
-      return false;
+      return result.contains(ConnectivityResult.wifi) ||
+          result.contains(ConnectivityResult.ethernet);
     } catch (_) {
       // Không xác định được — mặc định coi như KHÔNG phải Wi-Fi để an toàn
       // (tránh tốn data người dùng nếu detect sai).

@@ -86,7 +86,7 @@ class _ChatProfileScreenState extends State<ChatProfileScreen> {
             onPressed: () async {
               try {
                 await chatService.setDisplayName(_nameCtrl.text);
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -97,7 +97,7 @@ class _ChatProfileScreenState extends State<ChatProfileScreen> {
                   setState(() {});
                 }
               } catch (e) {
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context)
                       .showSnackBar(SnackBar(content: Text('$e')));
                 }

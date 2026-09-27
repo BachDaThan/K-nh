@@ -1,8 +1,8 @@
 import 'reader_settings.dart';
 
 String buildWebReaderJs() {
-  final bg = '#${readerSettings.backgroundColor.value.toRadixString(16).substring(2)}';
-  final fg = '#${readerSettings.textColor.value.toRadixString(16).substring(2)}';
+  final bg = '#${readerSettings.backgroundColor.toARGB32().toRadixString(16).substring(2)}';
+  final fg = '#${readerSettings.textColor.toARGB32().toRadixString(16).substring(2)}';
   final fs = readerSettings.fontSize;
   final lh = readerSettings.lineHeight;
   return '''
@@ -22,7 +22,7 @@ String buildWebReaderJs() {
   root.setAttribute('style',
     'position:fixed;inset:0;z-index:2147483647;overflow:auto;' +
     'background:$bg;color:$fg;padding:24px 18px 80px;' +
-    'font:${fs}px/${lh} Georgia,serif;');
+    'font:${fs}px/$lh Georgia,serif;');
   var h = document.createElement('h1');
   h.textContent = title;
   h.style.cssText = 'font-size:1.35rem;margin:0 0 12px;';

@@ -193,10 +193,12 @@ class KinhMeshChannel extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void dispose() {
     _sub?.cancel();
     incomingText.close();
     callEvents.close();
+    super.dispose();
   }
 }
 

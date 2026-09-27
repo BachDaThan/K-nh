@@ -42,15 +42,15 @@ class TabStrip extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: active
                           ? (tab.isIncognito
-                              ? Colors.purple.withOpacity(0.2)
-                              : Colors.white.withOpacity(0.12))
-                          : Colors.white.withOpacity(0.04),
+                              ? Colors.purple.withValues(alpha: 0.2)
+                              : Colors.white.withValues(alpha: 0.12))
+                          : Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: active
                             ? (tab.isIncognito
-                                ? Colors.purpleAccent.withOpacity(0.6)
-                                : const Color(0xFF6C8CFF).withOpacity(0.5))
+                                ? Colors.purpleAccent.withValues(alpha: 0.6)
+                                : const Color(0xFF6C8CFF).withValues(alpha: 0.5))
                             : Colors.transparent,
                       ),
                     ),
@@ -93,13 +93,13 @@ class TabStrip extends StatelessWidget {
                           // mới ăn.
                           behavior: HitTestBehavior.opaque,
                           onTap: () => onClose(tab.id),
-                          child: Padding(
+                          child: const Padding(
                             // Icon gốc chỉ 14px — quá nhỏ so với chuẩn tối
                             // thiểu vùng chạm cảm ứng (~44-48dp). Thêm
                             // padding để vùng chạm thực tế đủ lớn mà
                             // không đổi kích thước icon hiển thị.
-                            padding: const EdgeInsets.all(10),
-                            child: const Icon(Icons.close,
+                            padding: EdgeInsets.all(10),
+                            child: Icon(Icons.close,
                                 size: 14, color: Colors.white54),
                           ),
                         ),

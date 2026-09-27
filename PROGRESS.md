@@ -187,4 +187,6 @@ GitHub → **Actions** (build xanh) → **Releases** → `Kinh.apk` / `Kinh-Wind
 - Xin quyền mesh: **native Android** (`MeshPlugin` + `openAppSettings`)
 
 ## 0.15.10
-- **Bản build mới** — bump version `0.15.10+60` sau bản 0.15.9, tái build APK/EXE qua GitHub Actions (không đổi tính năng)
+- **Fix `flutter analyze --fatal-infos`** (CI build đỏ): 105 issues — `withOpacity` → `withValues(alpha:)` (61 chỗ), `RadioListTile.groupValue/onChanged` → `RadioGroup` ancestor (3 nhóm: DoH, engine tìm kiếm, Safe Browsing), `DropdownButtonFormField.value` → `initialValue`, `ReorderableListView.onReorder` → `onReorderItem`, guard `context.mounted` sau async gap (5 chỗ), bỏ type-check thừa (connectivity_plus 6.x luôn trả `List`), `@override` + `super.dispose()` đúng chỗ, cleanup escape/const/unused variable, `test/widget_test.dart` hợp lệ (CI `flutter create` đang sinh test mẫu lỗi `MyApp`)
+- **Sửa regex `story_fetcher`**: bỏ `\` thừa trong raw string — regex giờ khớp `id="chapter-…"` / `id='chapter-…'` thật (trước đó bắt buộc có `\` trước dấu nháy → không khớp được)
+- Bump version `0.15.10+60`, tái build APK/EXE qua GitHub Actions

@@ -45,7 +45,6 @@ class _BentoCardState extends State<BentoCard>
     return AnimatedBuilder(
       animation: _pulse,
       builder: (context, child) {
-        final glow = 0.25 + _pulse.value * 0.35;
         return child!;
       },
       child: GestureDetector(
@@ -65,13 +64,13 @@ class _BentoCardState extends State<BentoCard>
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: accent.withOpacity(g),
+                      color: accent.withValues(alpha: g),
                       blurRadius: 18 + _pulse.value * 10,
                       spreadRadius: -2,
                       offset: const Offset(0, 6),
                     ),
                     BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
+                      color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -80,9 +79,9 @@ class _BentoCardState extends State<BentoCard>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      accent.withOpacity(0.35),
-                      accent.withOpacity(0.05),
-                      Colors.white.withOpacity(isDark ? 0.08 : 0.4),
+                      accent.withValues(alpha: 0.35),
+                      accent.withValues(alpha: 0.05),
+                      Colors.white.withValues(alpha: isDark ? 0.08 : 0.4),
                     ],
                   ),
                 ),
@@ -99,14 +98,14 @@ class _BentoCardState extends State<BentoCard>
                           end: Alignment.bottomRight,
                           colors: isDark
                               ? [
-                                  Colors.white.withOpacity(0.12),
-                                  Colors.white.withOpacity(0.04),
-                                  accent.withOpacity(0.08),
+                                  Colors.white.withValues(alpha: 0.12),
+                                  Colors.white.withValues(alpha: 0.04),
+                                  accent.withValues(alpha: 0.08),
                                 ]
                               : [
-                                  Colors.white.withOpacity(0.85),
-                                  Colors.white.withOpacity(0.65),
-                                  accent.withOpacity(0.12),
+                                  Colors.white.withValues(alpha: 0.85),
+                                  Colors.white.withValues(alpha: 0.65),
+                                  accent.withValues(alpha: 0.12),
                                 ],
                         ),
                       ),
@@ -119,10 +118,10 @@ class _BentoCardState extends State<BentoCard>
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: accent.withOpacity(0.18),
+                              color: accent.withValues(alpha: 0.18),
                               boxShadow: [
                                 BoxShadow(
-                                  color: accent.withOpacity(0.35),
+                                  color: accent.withValues(alpha: 0.35),
                                   blurRadius: 12,
                                 ),
                               ],
@@ -155,7 +154,7 @@ class _BentoCardState extends State<BentoCard>
                                   shadows: isDark
                                       ? [
                                           Shadow(
-                                            color: accent.withOpacity(0.4),
+                                            color: accent.withValues(alpha: 0.4),
                                             blurRadius: 8,
                                           ),
                                         ]
@@ -170,7 +169,7 @@ class _BentoCardState extends State<BentoCard>
                                 Text(
                                   item.subtitle!,
                                   style: TextStyle(
-                                    color: textColor.withOpacity(0.72),
+                                    color: textColor.withValues(alpha: 0.72),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w500,
                                   ),

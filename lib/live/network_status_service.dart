@@ -20,11 +20,8 @@ class NetworkStatusService {
 
   Future<NetworkStatus> fetch() async {
     try {
-      final result = await Connectivity().checkConnectivity();
+      final list = await Connectivity().checkConnectivity();
       // connectivity_plus 6.x: List<ConnectivityResult>
-      final list = result is List
-          ? (result as List).cast<ConnectivityResult>()
-          : <ConnectivityResult>[result as ConnectivityResult];
 
       NetworkStatus status;
       if (list.contains(ConnectivityResult.none) || list.isEmpty) {

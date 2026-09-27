@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen>
                 center: const Alignment(0, -0.2),
                 radius: 1.1,
                 colors: [
-                  accent.withOpacity(0.22),
+                  accent.withValues(alpha: 0.22),
                   bg,
                   bg,
                 ],
@@ -95,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen>
                         letterSpacing: 1.2,
                         color: Theme.of(context).colorScheme.onSurface,
                         shadows: [
-                          Shadow(color: accent.withOpacity(0.5), blurRadius: 16),
+                          Shadow(color: accent.withValues(alpha: 0.5), blurRadius: 16),
                         ],
                       ),
                     ),
@@ -107,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
-                            .withOpacity(0.55),
+                            .withValues(alpha: 0.55),
                       ),
                     ),
                   ],
@@ -144,7 +144,7 @@ class _CrystalPainter extends CustomPainter {
     path.close();
 
     final glow = Paint()
-      ..color = accent.withOpacity(0.35)
+      ..color = accent.withValues(alpha: 0.35)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
     canvas.drawPath(path, glow);
 
@@ -163,7 +163,7 @@ class _CrystalPainter extends CustomPainter {
     final stroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
-      ..color = Colors.white.withOpacity(0.35);
+      ..color = Colors.white.withValues(alpha: 0.35);
     canvas.drawPath(path, stroke);
   }
 

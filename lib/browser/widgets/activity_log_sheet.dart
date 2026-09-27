@@ -99,7 +99,7 @@ class _ActivityLogSheetState extends State<ActivityLogSheet> {
                 'Nhật ký minh bạch: điều hướng, lỗi, dọn dẹp, ẩn danh…\n'
                 'Sự kiện ẩn danh chỉ nằm RAM (không ghi đĩa).',
                 style: TextStyle(
-                    fontSize: 12, color: Colors.white.withOpacity(0.5)),
+                    fontSize: 12, color: Colors.white.withValues(alpha: 0.5)),
               ),
               const SizedBox(height: 8),
               Expanded(

@@ -47,7 +47,7 @@ class FaqScreen extends StatelessWidget {
             color: Theme.of(context)
                 .colorScheme
                 .primaryContainer
-                .withOpacity(0.35),
+                .withValues(alpha: 0.35),
             child: const Padding(
               padding: EdgeInsets.all(12),
               child: Text(
